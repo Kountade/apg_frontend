@@ -11,7 +11,7 @@ const getBaseUrl = () => {
   
   // Priorité 2 : Détection selon le mode
   if (import.meta.env.PROD) {
-    return 'https://sodepci-backend.onrender.com'
+    return 'https://apg-backend-osc9.onrender.com'
   }
   
   // Développement local
