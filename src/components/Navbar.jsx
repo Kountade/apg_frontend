@@ -1,19 +1,15 @@
-// src/components/Navbar.jsx - Version avec STATION SERVICES - IMPORTS CORRIGÉS
+// src/components/Navbar.jsx - Version APG ASSAINISSEMENT
+// Gestion des Déchets Domestiques
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  ShoppingBag, 
   Users, 
-  Package, 
   Building2, 
-  Tags, 
   LogOut, 
   UserCircle, 
   Settings, 
-  Warehouse, 
-  ShoppingCart,
   Receipt,
   FileText,
   ChevronDown,
@@ -28,7 +24,6 @@ import {
   Calendar,
   TrendingUp,
   CreditCard,
-  Boxes,
   AlertTriangle,
   Search,
   HelpCircle,
@@ -36,13 +31,9 @@ import {
   Truck,
   ArrowLeftRight,
   DollarSign,
-  Ruler,
   ClipboardCheck,
   MoveHorizontal,
   Calculator,
-  PackageCheck,
-  Layers,
-  ArrowLeftRight as ReturnIcon,
   AlertOctagon,
   Wallet,
   BookOpen,
@@ -75,51 +66,53 @@ import {
   Handshake,
   FileCheck,
   RotateCcw,
-  Receipt as ReceiptIcon,
-  CreditCard as CreditCardIcon,
   BarChart,
   Clipboard,
-  AlertCircle as AlertCircleIcon,
   Archive,
-  PackageOpen,
-  Truck as TruckIcon,
   Map,
   UserCheck,
   Route,
-  PackagePlus,
   PlusCircle,
   BadgeDollarSign,
-  Barcode,
-  GraduationCap,
   UserPlus,
   FilePlus,
-  CreditCard as CreditCardPlus,
   Plus,
   Grid3x3,
   TableProperties,
   // ============================================================
-  // ✅ ICÔNES POUR STATION SERVICES (UNIQUEMENT CELLES NON DÉCLARÉES)
+  // ✅ ICÔNES SPÉCIFIQUES APG ASSAINISSEMENT
   // ============================================================
-  Fuel,
+  Trash2,
+  Recycle,
+  Leaf,
+  MapPin,
   Droplet,
-  Car,
-  Wrench,
+  Wind,
+  Factory,
+  Container,
+  Gauge as GaugeIcon,
+  Weight,
   Timer,
-  Server,
-  AlertCircle as AlertCircleIcon2,
-  BarChart3 as StatsChart,
-  Settings as SettingsGear,
-  Fuel as GasPump,
-  Droplet as OilDrop,
-  Car as CarWash,
-  Wrench as Tools,
-  Timer as Hourglass,
-  Server as Pump
+  Navigation,
+  CheckSquare,
+  XSquare,
+  ListChecks,
+  AlertTriangle as AlertTriangleIcon,
+  Droplets,
+  Sparkles,
+  Sprout,
+  HeartPulse,
+  Flame,
+  HardHat,
+  Briefcase,
+  ChevronRight,
 } from 'lucide-react';
 
 import axiosInstance from './AxiosInstance';
 
-// Configuration des rôles
+// ============================================================
+// CONFIGURATION DES RÔLES POUR APG ASSAINISSEMENT
+// ============================================================
 const ROLE_CONFIG = {
   admin: { 
     label: 'Administrateur', 
@@ -135,19 +128,19 @@ const ROLE_CONFIG = {
     description: 'Gestion complète', 
     level: 80 
   },
-  vendeur: { 
-    label: 'Vendeur', 
-    color: 'primary', 
-    icon: ShoppingBag, 
-    description: 'Ventes uniquement', 
-    level: 60 
+  superviseur: { 
+    label: 'Superviseur', 
+    color: 'info', 
+    icon: ClipboardCheck, 
+    description: 'Supervision des tournées', 
+    level: 75 
   },
-  magasinier: { 
-    label: 'Magasinier', 
+  agent: { 
+    label: 'Agent de Collecte', 
     color: 'success', 
-    icon: Package, 
-    description: 'Gestion de stock', 
-    level: 70 
+    icon: Truck, 
+    description: 'Collecte terrain', 
+    level: 60 
   },
   comptable: { 
     label: 'Comptable', 
@@ -163,22 +156,26 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   const path = location.pathname || '/';
   const navigate = useNavigate();
 
-  // États principaux
+  // ============================================================
+  // ÉTATS PRINCIPAUX
+  // ============================================================
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Sections ouvertes par défaut
   const [openSections, setOpenSections] = useState({
     'TABLEAU DE BORD': true,
-    'VENTES': true,
-    'PORTE-MONNAIE CLIENTS': false,
-    'PRODUITS & STOCKS': true,
-    'ACHATS & FOURNISSEURS': false,
+    'COLLECTE & TOURNÉES': true,
+    'CLIENTS & ABONNEMENTS': true,
+    'POINTS DE COLLECTE': false,
+    'FLOTTE & VÉHICULES': false,
+    'TRAITEMENT & RECYCLAGE': false,
     'FINANCES': true,
     'TRÉSORERIE': false,
-    'LIVRAISONS': false,
-    'STATION SERVICES': false,
+    'RAPPORTS': false,
     'PARAMÈTRES': false,
     'MON ESPACE': false
   });
@@ -192,31 +189,24 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   const [loadingEtab, setLoadingEtab] = useState(true);
   const [logoUrl, setLogoUrl] = useState(null);
 
-  // États des compteurs
-  const [ventesImpayees, setVentesImpayees] = useState(0);
-  const [notificationsCount, setNotificationsCount] = useState(0);
-  const [commandesEnAttente, setCommandesEnAttente] = useState(0);
-  const [stocksFaibles, setStocksFaibles] = useState(0);
-  const [alertesStockCount, setAlertesStockCount] = useState(0);
-  const [lotsExpirant, setLotsExpirant] = useState(0);
-  const [inventairesEnCours, setInventairesEnCours] = useState(0);
+  // ============================================================
+  // COMPTEURS - ADAPTÉS POUR APG
+  // ============================================================
   const [facturesImpayees, setFacturesImpayees] = useState(0);
-  const [receptionsEnAttente, setReceptionsEnAttente] = useState(0);
-  const [retoursEnAttente, setRetoursEnAttente] = useState(0);
-  const [paiementsFournisseursEnAttente, setPaiementsFournisseursEnAttente] = useState(0);
+  const [notificationsCount, setNotificationsCount] = useState(0);
+  const [collectesEnAttente, setCollectesEnAttente] = useState(0);
+  const [abonnementsExpirant, setAbonnementsExpirant] = useState(0);
+  const [conteneursPleins, setConteneursPleins] = useState(0);
+  const [vehiculesEnMaintenance, setVehiculesEnMaintenance] = useState(0);
+  const [reclamationsClients, setReclamationsClients] = useState(0);
+  const [tourneesDuJour, setTourneesDuJour] = useState(0);
+  const [zonesEnRetard, setZonesEnRetard] = useState(0);
   const [depensesEnAttente, setDepensesEnAttente] = useState(0);
-  const [budgetsAlertes, setBudgetsAlertes] = useState(0);
-  const [ecrituresBrouillon, setEcrituresBrouillon] = useState(0);
   const [tresorerieAlerte, setTresorerieAlerte] = useState(0);
 
-  // États pour STATION SERVICES
-  const [cuvesAlerte, setCuvesAlerte] = useState(0);
-  const [pompesActives, setPompesActives] = useState(0);
-  const [ventesCarburantJour, setVentesCarburantJour] = useState(0);
-  const [servicesEnAttente, setServicesEnAttente] = useState(0);
-  const [niveauCuveMoyen, setNiveauCuveMoyen] = useState(0);
-
-  // Récupérer l'utilisateur connecté
+  // ============================================================
+  // RÉCUPÉRATION DE L'UTILISATEUR
+  // ============================================================
   const getUserData = () => {
     try {
       const userData = localStorage.getItem('User');
@@ -227,7 +217,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   };
 
   const user = getUserData();
-  const role = user?.role || 'vendeur';
+  const role = user?.role || 'agent';
   const userEmail = user?.email || '';
   const firstName = user?.first_name || '';
   const lastName = user?.last_name || '';
@@ -242,11 +232,13 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   const formattedTime = currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const formattedDate = currentTime.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  // Permissions
+  // ============================================================
+  // PERMISSIONS ADAPTÉES APG
+  // ============================================================
   const isAdmin = role === 'admin';
   const isGestionnaire = role === 'gestionnaire' || isAdmin;
-  const isVendeur = role === 'vendeur';
-  const isMagasinier = role === 'magasinier' || isGestionnaire;
+  const isSuperviseur = role === 'superviseur' || isGestionnaire;
+  const isAgent = role === 'agent';
   const isComptable = role === 'comptable' || isAdmin;
 
   // Initiale utilisateur
@@ -260,10 +252,12 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     }
   }, [firstName, lastName, userName]);
 
-  const roleConfig = ROLE_CONFIG[role] || ROLE_CONFIG.vendeur;
+  const roleConfig = ROLE_CONFIG[role] || ROLE_CONFIG.agent;
   const RoleIcon = roleConfig.icon;
 
-  // Fonction pour construire l'URL complète du logo
+  // ============================================================
+  // CONSTRUCTION URL LOGO
+  // ============================================================
   const getLogoUrl = (logoPath) => {
     if (!logoPath) return null;
     if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
@@ -277,7 +271,9 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     return `${baseURL}${logoPath.startsWith('/') ? '' : '/'}${logoPath}`;
   };
 
-  // Chargement des données de l'établissement
+  // ============================================================
+  // CHARGEMENT ÉTABLISSEMENT
+  // ============================================================
   useEffect(() => {
     const fetchEtablissement = async () => {
       try {
@@ -298,46 +294,87 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     fetchEtablissement();
   }, []);
 
-  // Charger les autres données
+  // ============================================================
+  // CHARGEMENT DES COMPTEURS APG
+  // ============================================================
   useEffect(() => {
     const loadData = async () => {
       try {
         const token = localStorage.getItem('Token');
         if (!token) return;
 
-        if (isAdmin || isGestionnaire) {
-          // ... (tous vos appels API existants)
-          
-          // Chargement des données STATION SERVICES
+        if (isAdmin || isGestionnaire || isSuperviseur) {
+          // Factures impayées
           try {
-            const cuvesRes = await axiosInstance.get('/cuves/alert/', {
+            const facturesRes = await axiosInstance.get('/factures/impayees/', {
               headers: { Authorization: `Token ${token}` }
             }).catch(() => ({ data: [] }));
-            setCuvesAlerte(cuvesRes.data?.length || 0);
+            setFacturesImpayees(facturesRes.data?.length || 0);
+          } catch (e) { console.error(e); }
 
-            const pompesRes = await axiosInstance.get('/pompes/active/', {
+          // Collectes en attente
+          try {
+            const collectesRes = await axiosInstance.get('/collectes/en-attente/', {
               headers: { Authorization: `Token ${token}` }
             }).catch(() => ({ data: [] }));
-            setPompesActives(pompesRes.data?.length || 0);
+            setCollectesEnAttente(collectesRes.data?.length || 0);
+          } catch (e) { console.error(e); }
 
-            const ventesCarburantRes = await axiosInstance.get('/ventes-carburant/today/', {
-              headers: { Authorization: `Token ${token}` }
-            }).catch(() => ({ data: { total: 0 } }));
-            setVentesCarburantJour(ventesCarburantRes.data?.total || 0);
-
-            const servicesRes = await axiosInstance.get('/ventes-services/pending/', {
+          // Abonnements expirant
+          try {
+            const aboRes = await axiosInstance.get('/abonnements/expirant/', {
               headers: { Authorization: `Token ${token}` }
             }).catch(() => ({ data: [] }));
-            setServicesEnAttente(servicesRes.data?.length || 0);
+            setAbonnementsExpirant(aboRes.data?.length || 0);
+          } catch (e) { console.error(e); }
 
-            const niveauRes = await axiosInstance.get('/cuves/niveau-moyen/', {
+          // Conteneurs pleins
+          try {
+            const contRes = await axiosInstance.get('/conteneurs/pleins/', {
               headers: { Authorization: `Token ${token}` }
-            }).catch(() => ({ data: { niveau_moyen: 0 } }));
-            setNiveauCuveMoyen(niveauRes.data?.niveau_moyen || 0);
+            }).catch(() => ({ data: [] }));
+            setConteneursPleins(contRes.data?.length || 0);
+          } catch (e) { console.error(e); }
 
-          } catch (error) {
-            console.error('Erreur chargement données station:', error);
-          }
+          // Véhicules en maintenance
+          try {
+            const vehRes = await axiosInstance.get('/vehicules/maintenance/', {
+              headers: { Authorization: `Token ${token}` }
+            }).catch(() => ({ data: [] }));
+            setVehiculesEnMaintenance(vehRes.data?.length || 0);
+          } catch (e) { console.error(e); }
+
+          // Réclamations clients
+          try {
+            const reclRes = await axiosInstance.get('/reclamations/nouvelles/', {
+              headers: { Authorization: `Token ${token}` }
+            }).catch(() => ({ data: [] }));
+            setReclamationsClients(reclRes.data?.length || 0);
+          } catch (e) { console.error(e); }
+
+          // Tournées du jour
+          try {
+            const tourneesRes = await axiosInstance.get('/tournees/aujourdhui/', {
+              headers: { Authorization: `Token ${token}` }
+            }).catch(() => ({ data: [] }));
+            setTourneesDuJour(tourneesRes.data?.length || 0);
+          } catch (e) { console.error(e); }
+
+          // Zones en retard
+          try {
+            const zonesRes = await axiosInstance.get('/zones/retard/', {
+              headers: { Authorization: `Token ${token}` }
+            }).catch(() => ({ data: [] }));
+            setZonesEnRetard(zonesRes.data?.length || 0);
+          } catch (e) { console.error(e); }
+
+          // Dépenses en attente
+          try {
+            const depRes = await axiosInstance.get('/depenses/en-attente/', {
+              headers: { Authorization: `Token ${token}` }
+            }).catch(() => ({ data: [] }));
+            setDepensesEnAttente(depRes.data?.length || 0);
+          } catch (e) { console.error(e); }
         }
       } catch (error) {
         console.error('Erreur chargement données:', error);
@@ -345,14 +382,15 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     };
 
     loadData();
-  }, [role, isAdmin, isGestionnaire]);
+  }, [role, isAdmin, isGestionnaire, isSuperviseur]);
 
-  // Gestion des sections
+  // ============================================================
+  // GESTION DES SECTIONS
+  // ============================================================
   const handleSectionToggle = (section) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // Déconnexion
   const logoutUser = () => {
     setIsUserMenuOpen(false);
     localStorage.removeItem('Token');
@@ -361,9 +399,8 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   };
 
   // ============================================================
-  // MENU SECTIONS - TOUT EN FRANÇAIS
+  // MENU SECTIONS - ADAPTÉ APG ASSAINISSEMENT
   // ============================================================
-  
   const menuSections = [
     // 1. TABLEAU DE BORD
     {
@@ -371,254 +408,541 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       icon: LayoutDashboard,
       items: [
         { id: 'dashboard', text: 'Tableau de Bord', icon: LayoutDashboard, path: '/dashboard', permission: true },
-        { id: 'statistiques', text: 'Statistiques', icon: TrendingUp, path: '/statistiques', permission: isAdmin || isGestionnaire },
-        { id: 'analyses', text: 'Analyses', icon: BarChart3, path: '/analyses', permission: isAdmin || isGestionnaire }
+        { id: 'statistiques', text: 'Statistiques Collecte', icon: TrendingUp, path: '/statistiques', permission: isAdmin || isGestionnaire },
+        { id: 'analyses', text: 'Analyses & Rapports', icon: BarChart3, path: '/analyses', permission: isAdmin || isGestionnaire }
       ]
     },
 
-    // 2. VENTES
+    // 2. COLLECTE & TOURNÉES
     {
-      name: 'VENTES',
-      icon: ShoppingCart,
+      name: 'COLLECTE & TOURNÉES',
+      icon: Truck,
       items: [
-        { id: 'ventes', text: 'Ventes', icon: ShoppingCart, path: '/ventes', permission: isAdmin || isGestionnaire || isVendeur, badge: ventesImpayees > 0 ? ventesImpayees : 0 },
-        { id: 'nouvelle-vente', text: 'Nouvelle Vente', icon: PlusCircle, path: '/ventes/nouveau', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'separator-ventes-1', text: '', icon: null, path: '#', permission: true, separator: true },
-        { id: 'clients', text: 'Clients', icon: Users, path: '/clients', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'nouveau-client', text: 'Nouveau Client', icon: UserPlus, path: '/clients/nouveau', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'separator-ventes-2', text: '', icon: null, path: '#', permission: true, separator: true },
-        { id: 'devis', text: 'Devis', icon: FileText, path: '/devis', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'nouveau-devis', text: 'Nouveau Devis', icon: FilePlus, path: '/devis/nouveau', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'separator-ventes-3', text: '', icon: null, path: '#', permission: true, separator: true },
-        { id: 'factures', text: 'Factures Clients', icon: Receipt, path: '/factures', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'paiements', text: 'Paiements Clients', icon: CreditCard, path: '/paiements', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'nouveau-paiement', text: 'Nouveau Paiement', icon: CreditCardPlus, path: '/paiements/nouveau', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'separator-ventes-4', text: '', icon: null, path: '#', permission: true, separator: true },
-        { id: 'pos', text: 'Point de Vente', icon: ShoppingBag, path: '/point-de-vente', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'pos-scan', text: 'Scan & Vente', icon: Barcode, path: '/pos-scan', permission: isAdmin || isGestionnaire || isVendeur },
-        { id: 'retours-clients', text: 'Retours Clients', icon: ReturnIcon, path: '/retours-clients', permission: isAdmin || isGestionnaire }
+        { 
+          id: 'tournees', 
+          text: 'Tournées de Collecte', 
+          icon: Route, 
+          path: '/tournees', 
+          permission: isAdmin || isGestionnaire || isSuperviseur || isAgent,
+          badge: tourneesDuJour > 0 ? tourneesDuJour : 0
+        },
+        { 
+          id: 'nouvelle-tournee', 
+          text: 'Nouvelle Tournée', 
+          icon: PlusCircle, 
+          path: '/tournees/nouvelle', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        },
+        { 
+          id: 'zones', 
+          text: 'Zones de Collecte', 
+          icon: MapPin, 
+          path: '/zones', 
+          permission: isAdmin || isGestionnaire || isSuperviseur,
+          badge: zonesEnRetard > 0 ? zonesEnRetard : 0
+        },
+        { 
+          id: 'zones-retard', 
+          text: 'Zones en Retard', 
+          icon: AlertTriangle, 
+          path: '/zones/retard', 
+          permission: isAdmin || isGestionnaire || isSuperviseur,
+          badge: zonesEnRetard > 0 ? zonesEnRetard : 0
+        },
+        { id: 'separator-collecte-1', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'collectes', 
+          text: 'Collectes en Cours', 
+          icon: Trash2, 
+          path: '/collectes', 
+          permission: isAdmin || isGestionnaire || isSuperviseur || isAgent,
+          badge: collectesEnAttente > 0 ? collectesEnAttente : 0
+        },
+        { 
+          id: 'nouvelle-collecte', 
+          text: 'Signaler une Collecte', 
+          icon: PlusCircle, 
+          path: '/collectes/nouvelle', 
+          permission: isAdmin || isGestionnaire || isSuperviseur || isAgent 
+        },
+        { 
+          id: 'historique-collectes', 
+          text: 'Historique Collectes', 
+          icon: History, 
+          path: '/collectes/historique', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        },
+        { id: 'separator-collecte-2', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'reclamations', 
+          text: 'Réclamations Clients', 
+          icon: AlertCircle, 
+          path: '/reclamations', 
+          permission: isAdmin || isGestionnaire || isSuperviseur,
+          badge: reclamationsClients > 0 ? reclamationsClients : 0
+        },
+        { 
+          id: 'calendrier-collecte', 
+          text: 'Calendrier de Collecte', 
+          icon: CalendarDays, 
+          path: '/calendrier-collecte', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        }
       ]
     },
 
-    // 3. PORTE-MONNAIE CLIENTS
+    // 3. CLIENTS & ABONNEMENTS
     {
-      name: 'PORTE-MONNAIE CLIENTS',
-      icon: Wallet,
+      name: 'CLIENTS & ABONNEMENTS',
+      icon: Users,
       items: [
-        { id: 'wallets', text: 'Gestion des Porte-monnaie', icon: Wallet, path: '/wallets', permission: isAdmin || isGestionnaire },
-        { id: 'wallet-deposit', text: 'Dépôt Client', icon: Plus, path: '/wallets/depot', permission: isAdmin || isGestionnaire },
-        { id: 'wallet-transactions', text: 'Historique des Transactions', icon: History, path: '/wallets/transactions', permission: isAdmin || isGestionnaire },
-        { id: 'wallet-pay', text: 'Paiement avec Porte-monnaie', icon: CreditCard, path: '/wallets/paiement', permission: isAdmin || isGestionnaire }
+        { 
+          id: 'clients', 
+          text: 'Clients Résidentiels', 
+          icon: Users, 
+          path: '/clients', 
+          permission: isAdmin || isGestionnaire || isSuperviseur || isAgent 
+        },
+        { 
+          id: 'nouveau-client', 
+          text: 'Nouveau Client', 
+          icon: UserPlus, 
+          path: '/clients/nouveau', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        },
+        { 
+          id: 'clients-professionnels', 
+          text: 'Clients Professionnels', 
+          icon: Building2, 
+          path: '/clients/professionnels', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { id: 'separator-client-1', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'abonnements', 
+          text: 'Abonnements', 
+          icon: FileCheck, 
+          path: '/abonnements', 
+          permission: isAdmin || isGestionnaire || isSuperviseur,
+          badge: abonnementsExpirant > 0 ? abonnementsExpirant : 0
+        },
+        { 
+          id: 'nouvel-abonnement', 
+          text: 'Nouvel Abonnement', 
+          icon: PlusCircle, 
+          path: '/abonnements/nouveau', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'abonnements-expirant', 
+          text: 'Abonnements Expirants', 
+          icon: CalendarClock, 
+          path: '/abonnements/expirant', 
+          permission: isAdmin || isGestionnaire,
+          badge: abonnementsExpirant > 0 ? abonnementsExpirant : 0
+        },
+        { id: 'separator-client-2', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'factures', 
+          text: 'Factures Clients', 
+          icon: Receipt, 
+          path: '/factures', 
+          permission: isAdmin || isGestionnaire || isSuperviseur,
+          badge: facturesImpayees > 0 ? facturesImpayees : 0
+        },
+        { 
+          id: 'paiements', 
+          text: 'Paiements Clients', 
+          icon: CreditCard, 
+          path: '/paiements', 
+          permission: isAdmin || isGestionnaire || isComptable 
+        },
+        { 
+          id: 'nouveau-paiement', 
+          text: 'Nouveau Paiement', 
+          icon: PlusCircle, 
+          path: '/paiements/nouveau', 
+          permission: isAdmin || isGestionnaire || isComptable 
+        }
       ]
     },
 
-    // 4. PRODUITS & STOCKS
+    // 4. POINTS DE COLLECTE
     {
-      name: 'PRODUITS & STOCKS',
-      icon: Package,
+      name: 'POINTS DE COLLECTE',
+      icon: MapPin,
       items: [
-        { id: 'categories', text: 'Catégories', icon: Tags, path: '/categories', permission: isAdmin || isGestionnaire },
-        { id: 'unites-mesure', text: 'Unités de Mesure', icon: Ruler, path: '/unites-mesure', permission: isAdmin },
-        { id: 'produits', text: 'Produits', icon: Package, path: '/produits', permission: isAdmin || isGestionnaire || isMagasinier },
-        { id: 'add-stock-manual', text: 'Ajout Manuel Stock', icon: PackagePlus, path: '/add-stock-manual', permission: isAdmin || isGestionnaire || isMagasinier },
-        { id: 'stocks', text: 'Stocks', icon: Boxes, path: '/stocks', permission: isAdmin || isGestionnaire || isMagasinier, badge: stocksFaibles > 0 ? stocksFaibles : 0 },
-        { id: 'entrepots', text: 'Entrepôts', icon: Warehouse, path: '/entrepots', permission: isAdmin || isGestionnaire },
-        { id: 'lots', text: 'Lots', icon: Layers, path: '/lots', permission: isAdmin || isGestionnaire || isMagasinier, badge: lotsExpirant > 0 ? lotsExpirant : 0 },
-        { id: 'mouvements-stock', text: 'Mouvements Stock', icon: MoveHorizontal, path: '/mouvements-stock', permission: isAdmin || isGestionnaire || isMagasinier },
-        { id: 'alertes-stock', text: 'Alertes Stock', icon: AlertOctagon, path: '/alertes-stock', permission: isAdmin || isGestionnaire, badge: alertesStockCount > 0 ? alertesStockCount : 0 },
-        { id: 'inventaires', text: 'Inventaires', icon: ClipboardCheck, path: '/inventaires', permission: isAdmin || isGestionnaire, badge: inventairesEnCours > 0 ? inventairesEnCours : 0 },
-        { id: 'transferts', text: 'Transferts', icon: ArrowLeftRight, path: '/transferts', permission: isAdmin || isGestionnaire }
+        { 
+          id: 'points-collecte', 
+          text: 'Points de Collecte', 
+          icon: MapPin, 
+          path: '/points-collecte', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        },
+        { 
+          id: 'nouveau-point', 
+          text: 'Nouveau Point', 
+          icon: PlusCircle, 
+          path: '/points-collecte/nouveau', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { id: 'separator-points-1', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'conteneurs', 
+          text: 'Conteneurs & Bacs', 
+          icon: Container, 
+          path: '/conteneurs', 
+          permission: isAdmin || isGestionnaire || isSuperviseur,
+          badge: conteneursPleins > 0 ? conteneursPleins : 0
+        },
+        { 
+          id: 'conteneurs-pleins', 
+          text: 'Conteneurs Pleins', 
+          icon: AlertTriangle, 
+          path: '/conteneurs/pleins', 
+          permission: isAdmin || isGestionnaire || isSuperviseur,
+          badge: conteneursPleins > 0 ? conteneursPleins : 0
+        },
+        { 
+          id: 'nouveau-conteneur', 
+          text: 'Nouveau Conteneur', 
+          icon: PlusCircle, 
+          path: '/conteneurs/nouveau', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { id: 'separator-points-2', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'types-dechets', 
+          text: 'Types de Déchets', 
+          icon: Recycle, 
+          path: '/types-dechets', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'carte-points', 
+          text: 'Carte des Points', 
+          icon: Map, 
+          path: '/points-collecte/carte', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        }
+      ]
+    },
+
+    // 5. FLOTTE & VÉHICULES
+    {
+      name: 'FLOTTE & VÉHICULES',
+      icon: Truck,
+      items: [
+        { 
+          id: 'vehicules', 
+          text: 'Véhicules de Collecte', 
+          icon: Truck, 
+          path: '/vehicules', 
+          permission: isAdmin || isGestionnaire,
+          badge: vehiculesEnMaintenance > 0 ? vehiculesEnMaintenance : 0
+        },
+        { 
+          id: 'nouveau-vehicule', 
+          text: 'Nouveau Véhicule', 
+          icon: PlusCircle, 
+          path: '/vehicules/nouveau', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'vehicules-maintenance', 
+          text: 'Véhicules en Maintenance', 
+          icon: AlertTriangle, 
+          path: '/vehicules/maintenance', 
+          permission: isAdmin || isGestionnaire,
+          badge: vehiculesEnMaintenance > 0 ? vehiculesEnMaintenance : 0
+        },
+        { id: 'separator-flotte-1', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'chauffeurs', 
+          text: 'Chauffeurs & Agents', 
+          icon: UserCheck, 
+          path: '/chauffeurs', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'equipes', 
+          text: 'Équipes de Collecte', 
+          icon: Users, 
+          path: '/equipes', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        },
+        { id: 'separator-flotte-2', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'maintenance', 
+          text: 'Maintenance', 
+          icon: Cog, 
+          path: '/maintenance', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'carburant', 
+          text: 'Carburant', 
+          icon: Droplet, 
+          path: '/carburant', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'suivi-vehicules', 
+          text: 'Suivi GPS', 
+          icon: Navigation, 
+          path: '/suivi-vehicules', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        }
+      ]
+    },
+
+    // 6. TRAITEMENT & RECYCLAGE
+    {
+      name: 'TRAITEMENT & RECYCLAGE',
+      icon: Recycle,
+      items: [
+        { 
+          id: 'centres-traitement', 
+          text: 'Centres de Traitement', 
+          icon: Factory, 
+          path: '/centres-traitement', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'nouveau-centre', 
+          text: 'Nouveau Centre', 
+          icon: PlusCircle, 
+          path: '/centres-traitement/nouveau', 
+          permission: isAdmin 
+        },
+        { id: 'separator-traitement-1', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'recyclage', 
+          text: 'Recyclage', 
+          icon: Recycle, 
+          path: '/recyclage', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'compostage', 
+          text: 'Compostage', 
+          icon: Sprout, 
+          path: '/compostage', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'valorisation', 
+          text: 'Valorisation Énergétique', 
+          icon: Flame, 
+          path: '/valorisation', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { id: 'separator-traitement-2', text: '', icon: null, path: '#', permission: true, separator: true },
+        { 
+          id: 'pesees', 
+          text: 'Pesées & Tonnages', 
+          icon: Weight, 
+          path: '/pesees', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        },
+        { 
+          id: 'nouvelle-pesee', 
+          text: 'Nouvelle Pesée', 
+          icon: PlusCircle, 
+          path: '/pesees/nouvelle', 
+          permission: isAdmin || isGestionnaire || isSuperviseur 
+        },
+        { 
+          id: 'statistiques-traitement', 
+          text: 'Statistiques Traitement', 
+          icon: BarChart3, 
+          path: '/statistiques-traitement', 
+          permission: isAdmin || isGestionnaire 
+        }
       ]
     }
   ];
 
-  // Sections pour Admin et Gestionnaire
+  // ============================================================
+  // SECTIONS POUR ADMIN / GESTIONNAIRE
+  // ============================================================
   if (isAdmin || isGestionnaire) {
-    // 5. ACHATS & FOURNISSEURS
-    menuSections.splice(4, 0, {
-      name: 'ACHATS & FOURNISSEURS',
-      icon: ShoppingBag,
-      items: [
-        { id: 'fournisseurs', text: 'Fournisseurs', icon: Building2, path: '/fournisseurs', permission: isAdmin || isGestionnaire },
-        { id: 'commandes-fournisseurs', text: 'Commandes Fournisseurs', icon: FileText, path: '/commandes-fournisseurs', permission: isAdmin || isGestionnaire, badge: commandesEnAttente > 0 ? commandesEnAttente : 0 },
-        { id: 'receptions', text: 'Réceptions', icon: PackageCheck, path: '/receptions', permission: isAdmin || isGestionnaire, badge: receptionsEnAttente > 0 ? receptionsEnAttente : 0 },
-        { id: 'retours-fournisseurs', text: 'Retours Fournisseurs', icon: RotateCcw, path: '/retours-fournisseurs', permission: isAdmin || isGestionnaire, badge: retoursEnAttente > 0 ? retoursEnAttente : 0 },
-        { id: 'factures-fournisseurs', text: 'Factures Fournisseurs', icon: ReceiptIcon, path: '/factures-fournisseurs', permission: isAdmin || isGestionnaire || isComptable, badge: facturesImpayees > 0 ? facturesImpayees : 0 },
-        { id: 'paiements-fournisseurs', text: 'Paiements Fournisseurs', icon: CreditCardIcon, path: '/paiements-fournisseurs', permission: isAdmin || isGestionnaire || isComptable, badge: paiementsFournisseursEnAttente > 0 ? paiementsFournisseursEnAttente : 0 },
-        { id: 'dashboard-achats', text: 'Dashboard Achats', icon: BarChart, path: '/dashboard-achats', permission: isAdmin || isGestionnaire }
-      ]
-    });
-
-    // 6. FINANCES
-    menuSections.splice(5, 0, {
+    // 7. FINANCES
+    menuSections.splice(6, 0, {
       name: 'FINANCES',
       icon: DollarSign,
       items: [
-        { id: 'dashboard-finances', text: 'Tableau de Bord Finances', icon: Gauge, path: '/dashboard-finances', permission: isAdmin || isComptable },
-        { id: 'comptes-comptables', text: 'Plan Comptable', icon: Grid3x3, path: '/comptes-comptables', permission: isAdmin || isComptable },
-        { id: 'ecritures-comptables', text: 'Écritures Comptables', icon: BookOpen, path: '/ecritures-comptables', permission: isAdmin || isComptable, badge: ecrituresBrouillon > 0 ? ecrituresBrouillon : 0 },
-        { id: 'journal-comptable', text: 'Journal Comptable', icon: ScrollText, path: '/journal-comptable', permission: isAdmin || isComptable },
-        { id: 'grand-livre', text: 'Grand Livre', icon: Scale, path: '/grand-livre', permission: isAdmin || isComptable },
-        { id: 'balance-generale', text: 'Balance Générale', icon: TableProperties, path: '/balance-generale', permission: isAdmin || isComptable },
-        { id: 'depenses', text: 'Dépenses', icon: TrendingDown, path: '/depenses', permission: isAdmin || isComptable, badge: depensesEnAttente > 0 ? depensesEnAttente : 0 },
-        { id: 'budgets', text: 'Budgets', icon: PiggyBank, path: '/budgets', permission: isAdmin || isComptable, badge: budgetsAlertes > 0 ? budgetsAlertes : 0 },
-        { id: 'rapports-financiers', text: 'Rapports Financiers', icon: FileSpreadsheet, path: '/rapports-financiers', permission: isAdmin || isComptable },
-        { id: 'config-financiere', text: 'Configuration Financière', icon: Cog, path: '/config-financiere', permission: isAdmin },
-        { id: 'separator-finances', text: '', icon: null, path: '#', permission: true, separator: true },
-        { id: 'nouvelle-depense', text: 'Nouvelle Dépense', icon: PlusCircle, path: '/depenses/nouveau', permission: isAdmin || isComptable },
-        { id: 'nouveau-budget', text: 'Nouveau Budget', icon: PlusCircle, path: '/budgets/nouveau', permission: isAdmin || isComptable },
-        { id: 'nouvelle-ecriture', text: 'Nouvelle Écriture', icon: PlusCircle, path: '/ecritures-comptables/nouveau', permission: isAdmin || isComptable }
+        { 
+          id: 'dashboard-finances', 
+          text: 'Tableau de Bord Finances', 
+          icon: Gauge, 
+          path: '/dashboard-finances', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'comptes-comptables', 
+          text: 'Plan Comptable', 
+          icon: Grid3x3, 
+          path: '/comptes-comptables', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'ecritures-comptables', 
+          text: 'Écritures Comptables', 
+          icon: BookOpen, 
+          path: '/ecritures-comptables', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'journal-comptable', 
+          text: 'Journal Comptable', 
+          icon: ScrollText, 
+          path: '/journal-comptable', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'grand-livre', 
+          text: 'Grand Livre', 
+          icon: Scale, 
+          path: '/grand-livre', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'balance-generale', 
+          text: 'Balance Générale', 
+          icon: TableProperties, 
+          path: '/balance-generale', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'depenses', 
+          text: 'Dépenses', 
+          icon: TrendingDown, 
+          path: '/depenses', 
+          permission: isAdmin || isComptable,
+          badge: depensesEnAttente > 0 ? depensesEnAttente : 0
+        },
+        { 
+          id: 'budgets', 
+          text: 'Budgets', 
+          icon: PiggyBank, 
+          path: '/budgets', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'rapports-financiers', 
+          text: 'Rapports Financiers', 
+          icon: FileSpreadsheet, 
+          path: '/rapports-financiers', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'config-financiere', 
+          text: 'Configuration Financière', 
+          icon: Cog, 
+          path: '/config-financiere', 
+          permission: isAdmin 
+        }
       ]
     });
 
-    // 7. TRÉSORERIE
-    menuSections.splice(6, 0, {
+    // 8. TRÉSORERIE
+    menuSections.splice(7, 0, {
       name: 'TRÉSORERIE',
       icon: Wallet,
       items: [
-        { id: 'dashboard-tresorerie', text: 'Tableau de Bord Trésorerie', icon: Gauge, path: '/dashboard-tresorerie', permission: isAdmin || isComptable, badge: tresorerieAlerte > 0 ? tresorerieAlerte : 0 },
-        { id: 'caisses', text: 'Caisses', icon: Banknote, path: '/caisses', permission: isAdmin || isComptable },
-        { id: 'comptes-bancaires', text: 'Comptes Bancaires', icon: Landmark, path: '/comptes-bancaires', permission: isAdmin || isComptable },
-        { id: 'mouvements-tresorerie', text: 'Mouvements Trésorerie', icon: Coins, path: '/mouvements-tresorerie', permission: isAdmin || isComptable },
-        { id: 'frais', text: 'Frais & Dépenses', icon: ReceiptText, path: '/frais', permission: isAdmin || isComptable },
-        { id: 'previsions', text: 'Prévisions', icon: CalendarDays, path: '/previsions', permission: isAdmin || isComptable },
-        { id: 'rapprochement-bancaire', text: 'Rapprochement Bancaire', icon: CheckCircle, path: '/rapprochement-bancaire', permission: isAdmin || isComptable },
-        { id: 'tresorerie-journaliere', text: 'Trésorerie Journalière', icon: ClipboardList, path: '/tresorerie-journaliere', permission: isAdmin || isComptable },
-        { id: 'alertes-tresorerie', text: 'Alertes Trésorerie', icon: AlertCircleIcon, path: '/alertes-tresorerie', permission: isAdmin || isComptable }
+        { 
+          id: 'dashboard-tresorerie', 
+          text: 'Tableau de Bord Trésorerie', 
+          icon: Gauge, 
+          path: '/dashboard-tresorerie', 
+          permission: isAdmin || isComptable,
+          badge: tresorerieAlerte > 0 ? tresorerieAlerte : 0
+        },
+        { 
+          id: 'caisses', 
+          text: 'Caisses', 
+          icon: Banknote, 
+          path: '/caisses', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'comptes-bancaires', 
+          text: 'Comptes Bancaires', 
+          icon: Landmark, 
+          path: '/comptes-bancaires', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'mouvements-tresorerie', 
+          text: 'Mouvements Trésorerie', 
+          icon: Coins, 
+          path: '/mouvements-tresorerie', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'previsions', 
+          text: 'Prévisions', 
+          icon: CalendarDays, 
+          path: '/previsions', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'rapprochement-bancaire', 
+          text: 'Rapprochement Bancaire', 
+          icon: CheckCircle, 
+          path: '/rapprochement-bancaire', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'alertes-tresorerie', 
+          text: 'Alertes Trésorerie', 
+          icon: AlertCircle, 
+          path: '/alertes-tresorerie', 
+          permission: isAdmin || isComptable 
+        }
       ]
     });
 
-    // 8. LIVRAISONS
-    menuSections.splice(7, 0, {
-      name: 'LIVRAISONS',
-      icon: Truck,
-      items: [
-        { id: 'livraisons', text: 'Livraisons', icon: TruckIcon, path: '/livraisons', permission: isAdmin || isGestionnaire },
-        { id: 'tournees', text: 'Tournées', icon: Route, path: '/tournees', permission: isAdmin || isGestionnaire },
-        { id: 'livreurs', text: 'Livreurs', icon: UserCheck, path: '/livreurs', permission: isAdmin || isGestionnaire },
-        { id: 'suivi-livraisons', text: 'Suivi Livraisons', icon: Map, path: '/suivi-livraisons', permission: isAdmin || isGestionnaire }
-      ]
-    });
-
-    // ✅ 9. STATION SERVICES
+    // 9. RAPPORTS
     menuSections.splice(8, 0, {
-      name: 'STATION SERVICES',
-      icon: GasPump,
+      name: 'RAPPORTS',
+      icon: FileText,
       items: [
         { 
-          id: 'station-dashboard', 
-          text: 'Tableau de Bord Station', 
-          icon: StatsChart, 
-          path: '/station/dashboard', 
-          permission: isAdmin || isGestionnaire,
-          badge: cuvesAlerte > 0 ? cuvesAlerte : 0
-        },
-        { id: 'separator-station-1', text: '', icon: null, path: '#', permission: true, separator: true },
-        { 
-          id: 'cuves', 
-          text: 'Gestion des Cuves', 
-          icon: OilDrop, 
-          path: '/station/cuves', 
-          permission: isAdmin || isGestionnaire || isMagasinier,
-          badge: cuvesAlerte > 0 ? cuvesAlerte : 0
-        },
-        { 
-          id: 'cuve-approvisionnement', 
-          text: 'Approvisionnement Cuve', 
-          icon: TruckIcon, 
-          path: '/station/cuves/approvisionnement', 
-          permission: isAdmin || isGestionnaire || isMagasinier 
-        },
-        { 
-          id: 'cuve-mouvements', 
-          text: 'Mouvements Cuves', 
-          icon: MoveHorizontal, 
-          path: '/station/cuves/mouvements', 
-          permission: isAdmin || isGestionnaire || isMagasinier 
-        },
-        { id: 'separator-station-2', text: '', icon: null, path: '#', permission: true, separator: true },
-        { 
-          id: 'pompes', 
-          text: 'Gestion des Pompes', 
-          icon: Pump, 
-          path: '/station/pompes', 
-          permission: isAdmin || isGestionnaire || isMagasinier,
-          badge: pompesActives > 0 ? pompesActives : 0
-        },
-        { 
-          id: 'pompe-ventes', 
-          text: 'Ventes par Pompe', 
-          icon: BarChart3, 
-          path: '/station/pompes/ventes', 
-          permission: isAdmin || isGestionnaire || isVendeur 
-        },
-        { id: 'separator-station-3', text: '', icon: null, path: '#', permission: true, separator: true },
-        { 
-          id: 'ventes-carburant', 
-          text: 'Ventes de Carburant', 
-          icon: Fuel, 
-          path: '/station/ventes-carburant', 
-          permission: isAdmin || isGestionnaire || isVendeur,
-          badge: ventesCarburantJour > 0 ? Math.round(ventesCarburantJour) : 0
-        },
-        { 
-          id: 'nouvelle-vente-carburant', 
-          text: 'Nouvelle Vente Carburant', 
-          icon: PlusCircle, 
-          path: '/station/ventes-carburant/nouveau', 
-          permission: isAdmin || isGestionnaire || isVendeur 
-        },
-        { 
-          id: 'prix-carburant', 
-          text: 'Gestion des Prix', 
-          icon: BadgeDollarSign, 
-          path: '/station/prix-carburant', 
-          permission: isAdmin || isGestionnaire 
-        },
-        { id: 'separator-station-4', text: '', icon: null, path: '#', permission: true, separator: true },
-        { 
-          id: 'services-station', 
-          text: 'Services Station', 
-          icon: Tools, 
-          path: '/station/services', 
-          permission: isAdmin || isGestionnaire || isVendeur,
-          badge: servicesEnAttente > 0 ? servicesEnAttente : 0
-        },
-        { 
-          id: 'ventes-services', 
-          text: 'Ventes de Services', 
-          icon: CarWash, 
-          path: '/station/ventes-services', 
-          permission: isAdmin || isGestionnaire || isVendeur 
-        },
-        { 
-          id: 'nouveau-service', 
-          text: 'Nouveau Service', 
-          icon: PlusCircle, 
-          path: '/station/services/nouveau', 
-          permission: isAdmin || isGestionnaire 
-        },
-        { id: 'separator-station-5', text: '', icon: null, path: '#', permission: true, separator: true },
-        { 
-          id: 'station-statistiques', 
-          text: 'Statistiques Station', 
-          icon: StatsChart, 
-          path: '/station/statistiques', 
-          permission: isAdmin || isGestionnaire || isComptable 
-        },
-        { 
-          id: 'station-rapports', 
-          text: 'Rapports Station', 
+          id: 'rapports-collecte', 
+          text: 'Rapports de Collecte', 
           icon: FileSpreadsheet, 
-          path: '/station/rapports', 
-          permission: isAdmin || isGestionnaire || isComptable 
+          path: '/rapports/collecte', 
+          permission: isAdmin || isGestionnaire 
         },
         { 
-          id: 'station-config', 
-          text: 'Configuration Station', 
-          icon: SettingsGear, 
-          path: '/station/config', 
-          permission: isAdmin 
+          id: 'rapports-recyclage', 
+          text: 'Rapports de Recyclage', 
+          icon: Recycle, 
+          path: '/rapports/recyclage', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'rapports-clients', 
+          text: 'Rapports Clients', 
+          icon: Users, 
+          path: '/rapports/clients', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'rapports-financiers', 
+          text: 'Rapports Financiers', 
+          icon: FileSpreadsheet, 
+          path: '/rapports/financiers', 
+          permission: isAdmin || isComptable 
+        },
+        { 
+          id: 'rapports-environnement', 
+          text: 'Rapports Environnementaux', 
+          icon: Leaf, 
+          path: '/rapports/environnement', 
+          permission: isAdmin || isGestionnaire 
         }
       ]
     });
@@ -628,14 +952,63 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       name: 'PARAMÈTRES',
       icon: Settings,
       items: [
-        { id: 'company-config', text: 'Configuration Établissement', icon: Building2, path: '/company-config', permission: isAdmin },
-        { id: 'notifications', text: 'Notifications', icon: Bell, path: '/notifications', permission: isAdmin || isGestionnaire, badge: notificationsCount > 0 ? notificationsCount : 0 },
-        { id: 'system-settings', text: 'Paramètres Système', icon: Cog, path: '/system-settings', permission: isAdmin },
-        { id: 'document-templates', text: 'Modèles Documents', icon: Printer, path: '/document-templates', permission: isAdmin || isGestionnaire },
-        { id: 'backups', text: 'Sauvegardes', icon: Database, path: '/backups', permission: isAdmin },
-        { id: 'audit', text: "Journal d'audit", icon: History, path: '/audit', permission: isAdmin },
-        { id: 'utilisateurs', text: 'Utilisateurs', icon: Users, path: '/utilisateurs', permission: isAdmin },
-        { id: 'roles', text: 'Rôles & Permissions', icon: Shield, path: '/roles', permission: isAdmin }
+        { 
+          id: 'company-config', 
+          text: 'Configuration APG', 
+          icon: Building2, 
+          path: '/company-config', 
+          permission: isAdmin 
+        },
+        { 
+          id: 'notifications', 
+          text: 'Notifications', 
+          icon: Bell, 
+          path: '/notifications', 
+          permission: isAdmin || isGestionnaire,
+          badge: notificationsCount > 0 ? notificationsCount : 0
+        },
+        { 
+          id: 'utilisateurs', 
+          text: 'Utilisateurs', 
+          icon: Users, 
+          path: '/utilisateurs', 
+          permission: isAdmin 
+        },
+        { 
+          id: 'roles', 
+          text: 'Rôles & Permissions', 
+          icon: Shield, 
+          path: '/roles', 
+          permission: isAdmin 
+        },
+        { 
+          id: 'document-templates', 
+          text: 'Modèles Documents', 
+          icon: Printer, 
+          path: '/document-templates', 
+          permission: isAdmin || isGestionnaire 
+        },
+        { 
+          id: 'backups', 
+          text: 'Sauvegardes', 
+          icon: Database, 
+          path: '/backups', 
+          permission: isAdmin 
+        },
+        { 
+          id: 'audit', 
+          text: "Journal d'audit", 
+          icon: History, 
+          path: '/audit', 
+          permission: isAdmin 
+        },
+        { 
+          id: 'system-settings', 
+          text: 'Paramètres Système', 
+          icon: Cog, 
+          path: '/system-settings', 
+          permission: isAdmin 
+        }
       ]
     });
   }
@@ -656,9 +1029,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   const visibleSections = menuSections
     .map(section => {
       const visibleItems = section.items.filter(item => item.permission === true);
-      return {
-        ...section,
-        items: visibleItems      };
+      return { ...section, items: visibleItems };
     })
     .filter(section => section.items.length > 0);
 
@@ -686,7 +1057,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       ).map(item => ({ ...item, section: section.name }))
     ) : [];
 
-  // Fonction de rendu des items de menu
+  // Rendu item menu
   const renderMenuItem = (item, sectionName, isActive) => {
     if (item.separator) {
       return (
@@ -695,7 +1066,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     }
 
     const ItemIcon = item.icon;
-    const isNewItem = item.id && item.id.startsWith('nouveau-');
+    const isNewItem = item.id && item.id.startsWith('nouveau-') || item.id?.startsWith('nouvelle-');
     
     return (
       <Link
@@ -813,23 +1184,21 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                     {!loadingEtab && logoUrl ? (
                       <img
                         src={logoUrl}
-                        alt={etablissement?.nom || 'Logo établissement'}
+                        alt={etablissement?.nom || 'APG Logo'}
                         className="w-full h-full object-cover rounded-xl"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     ) : (
-                      <GraduationCap className="w-6 h-6 text-primary" />
+                      <Recycle className="w-6 h-6 text-primary" />
                     )}
                   </div>
                 </div>
                 <div>
                   <h1 className="text-primary-content font-bold text-lg tracking-wide">
-                    {!loadingEtab ? (etablissement?.nom || 'SODEPCI ERP') : 'Chargement...'}
+                    {!loadingEtab ? (etablissement?.nom || 'APG ASSAINISSEMENT') : 'Chargement...'}
                   </h1>
                   <p className="text-primary-content/60 text-[10px] font-medium">
-                    {!loadingEtab ? (etablissement?.sigle || 'ERP Management') : ''}
+                    {!loadingEtab ? (etablissement?.sigle || 'Gestion des Déchets') : ''}
                   </p>
                 </div>
               </Link>
@@ -842,16 +1211,14 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                       src={logoUrl}
                       alt={etablissement?.nom || 'Logo'}
                       className="w-full h-full object-cover rounded-lg"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   ) : (
-                    <GraduationCap className="w-5 h-5 text-primary" />
+                    <Recycle className="w-5 h-5 text-primary" />
                   )}
                 </div>
                 <span className="text-primary-content font-bold text-sm">
-                  {!loadingEtab ? (etablissement?.nom || 'SODEPCI ERP') : 'Chargement...'}
+                  {!loadingEtab ? (etablissement?.nom || 'APG') : 'Chargement...'}
                 </span>
               </div>
             </div>
@@ -881,15 +1248,10 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
               <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-content/10">
                 <RoleIcon className="w-4 h-4 text-primary-content" />
                 <span className="text-primary-content text-xs font-medium">{roleConfig.label}</span>
-                {isAdmin && (
-                  <span className="badge badge-error badge-xs ml-1">Admin</span>
-                )}
-                {isGestionnaire && !isAdmin && (
-                  <span className="badge badge-warning badge-xs ml-1">Gestion</span>
-                )}
-                {isComptable && !isAdmin && !isGestionnaire && (
-                  <span className="badge badge-secondary badge-xs ml-1">Compta</span>
-                )}
+                {isAdmin && <span className="badge badge-error badge-xs ml-1">Admin</span>}
+                {isGestionnaire && !isAdmin && <span className="badge badge-warning badge-xs ml-1">Gestion</span>}
+                {isSuperviseur && !isAdmin && !isGestionnaire && <span className="badge badge-info badge-xs ml-1">Superviseur</span>}
+                {isAgent && <span className="badge badge-success badge-xs ml-1">Agent</span>}
               </div>
 
               <button
@@ -928,9 +1290,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                               <span className={`badge badge-${roleConfig.color} badge-sm`}>
                                 {roleConfig.label}
                               </span>
-                              {isAdmin && <span className="badge badge-error badge-sm">Admin</span>}
-                              {isGestionnaire && !isAdmin && <span className="badge badge-warning badge-sm">Gestion</span>}
-                              {isComptable && !isAdmin && !isGestionnaire && <span className="badge badge-secondary badge-sm">Compta</span>}
                             </div>
                           </div>
                         </div>
@@ -998,21 +1357,19 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                     src={logoUrl}
                     alt={etablissement?.nom || 'Logo'}
                     className="w-full h-full object-cover rounded-xl"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 ) : (
-                  <GraduationCap className="w-6 h-6 text-white" />
+                  <Recycle className="w-6 h-6 text-white" />
                 )}
               </div>
               {sidebarOpen && (
                 <div>
                   <h2 className="font-bold text-base-content text-sm">
-                    {!loadingEtab ? (etablissement?.nom || 'SODEPCI ERP') : 'Chargement...'}
+                    {!loadingEtab ? (etablissement?.nom || 'APG ASSAINISSEMENT') : 'Chargement...'}
                   </h2>
                   <p className="text-xs text-base-content/50">
-                    {!loadingEtab ? (etablissement?.sigle || 'ERP Management') : ''}
+                    {!loadingEtab ? (etablissement?.sigle || 'Déchets Domestiques') : ''}
                   </p>
                 </div>
               )}
@@ -1035,8 +1392,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                       <RoleIcon className="w-3 h-3 mr-1" />
                       {roleConfig.label}
                     </span>
-                    {isAdmin && <span className="badge badge-error badge-sm">Admin</span>}
-                    {isGestionnaire && !isAdmin && <span className="badge badge-warning badge-sm">Gestion</span>}
                   </div>
                 </div>
               )}
@@ -1048,7 +1403,17 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
               const SectionIcon = section.icon;
               const isOpen = openSections[section.name] || false;
               
-              const sectionBadge = section.name === 'STATION SERVICES' && cuvesAlerte > 0 ? cuvesAlerte : 0;
+              // Badge section Collecte
+              const sectionBadge = 
+                section.name === 'COLLECTE & TOURNÉES' && (collectesEnAttente + zonesEnRetard) > 0 
+                  ? collectesEnAttente + zonesEnRetard 
+                  : section.name === 'POINTS DE COLLECTE' && conteneursPleins > 0
+                  ? conteneursPleins
+                  : section.name === 'CLIENTS & ABONNEMENTS' && (abonnementsExpirant + facturesImpayees) > 0
+                  ? abonnementsExpirant + facturesImpayees
+                  : section.name === 'FLOTTE & VÉHICULES' && vehiculesEnMaintenance > 0
+                  ? vehiculesEnMaintenance
+                  : 0;
               
               return (
                 <div key={idx} className="mb-1">
@@ -1071,7 +1436,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                         </span>
                         {sectionBadge > 0 && (
                           <span className="badge badge-error badge-xs animate-pulse">
-                            {sectionBadge}
+                            {sectionBadge > 99 ? '99+' : sectionBadge}
                           </span>
                         )}
                         {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -1097,10 +1462,10 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></div>
-                  <span className="text-xs text-base-content/50">v2.1.0</span>
+                  <span className="text-xs text-base-content/50">v1.0.0 APG</span>
                 </div>
                 <span className="badge badge-primary badge-sm">
-                  {!loadingEtab ? (etablissement?.sigle || 'SODEPCI') : 'SODEPCI'}
+                  {!loadingEtab ? (etablissement?.sigle || 'APG') : 'APG'}
                 </span>
               </div>
             ) : (
@@ -1139,17 +1504,15 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                         src={logoUrl}
                         alt={etablissement?.nom || 'Logo'}
                         className="w-full h-full object-cover rounded-xl"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
+                        onError={(e) => { e.target.style.display = 'none'; }}
                       />
                     ) : (
-                      <GraduationCap className="w-6 h-6 text-primary" />
+                      <Recycle className="w-6 h-6 text-primary" />
                     )}
                   </div>
                   <div>
                     <h2 className="text-primary-content font-bold text-lg">
-                      {!loadingEtab ? (etablissement?.nom || 'SODEPCI ERP') : 'Chargement...'}
+                      {!loadingEtab ? (etablissement?.nom || 'APG') : 'Chargement...'}
                     </h2>
                     <p className="text-primary-content/70 text-xs">{roleConfig.label}</p>
                   </div>

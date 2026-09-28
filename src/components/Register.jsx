@@ -1,4 +1,4 @@
-// src/components/Register.jsx - Version avec deux rôles (Admin & Vendeur)
+// src/components/Register.jsx - Version adaptée pour APG Assainissement
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -6,7 +6,8 @@ import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
 import { 
     UserPlus, Mail, Lock, User, Phone, Building2, 
-    Shield, AlertCircle, ArrowRight, Store, UserCog
+    Shield, AlertCircle, ArrowRight, Truck, UserCog,
+    Recycle, Leaf, MapPin, Calendar
 } from 'lucide-react'
 import MyTextField from './forms/MyTextField'
 import MyPassField from './forms/MyPassField'
@@ -14,21 +15,21 @@ import MyMessage from './Message'
 import AxiosInstance from './AxiosInstance'
 import logo from '../assets/logo.svg'
 
-// Configuration des rôles (Admin & Vendeur)
+// Configuration des rôles (Admin & Agent de Collecte)
 const ROLES = [
     { 
         value: 'admin', 
         label: 'Administrateur', 
-        description: 'Accès total à toutes les fonctionnalités', 
+        description: 'Accès total à la gestion du service', 
         icon: Shield,
         color: 'error',
         requiresApproval: false
     },
     { 
-        value: 'vendeur', 
-        label: 'Vendeur', 
-        description: 'Gestion des ventes et des clients', 
-        icon: Store,
+        value: 'agent', 
+        label: 'Agent de Collecte', 
+        description: 'Gestion des tournées et des clients', 
+        icon: Truck,
         color: 'success',
         requiresApproval: false
     }
@@ -58,7 +59,7 @@ const Register = () => {
             .oneOf([yup.ref('password')], 'Les mots de passe ne correspondent pas'),
         role: yup.string()
             .required('Rôle requis')
-            .oneOf(['admin', 'vendeur']),
+            .oneOf(['admin', 'agent']), // Changé de vendeur à agent
         first_name: yup.string()
             .max(200, 'Trop long')
             .optional(),
@@ -82,7 +83,7 @@ const Register = () => {
     const { handleSubmit, control, watch, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
         defaultValues: { 
-            role: 'vendeur',
+            role: 'agent', // Rôle par défaut changé
             first_name: '', 
             last_name: '', 
             username: '',
@@ -197,14 +198,14 @@ const Register = () => {
                                 <div className="p-2 rounded-lg bg-primary/10">
                                     <img 
                                         src={logo} 
-                                        alt="Logo SODEPSI" 
+                                        alt="Logo APG Assainissement" 
                                         className="h-10 w-10 object-contain"
                                     />
                                 </div>
                             </div>
-                            <h1 className="text-2xl font-bold text-base-content">SODEPSI</h1>
+                            <h1 className="text-2xl font-bold text-base-content">APG ASSAINISSEMENT</h1>
                             <div className="h-0.5 w-12 bg-primary mx-auto my-2"></div>
-                            <p className="text-sm text-base-content/60">Création de compte</p>
+                            <p className="text-sm text-base-content/60">Création de compte professionnel</p>
                         </div>
 
                         <form onSubmit={handleSubmit(submission)}>
@@ -213,7 +214,7 @@ const Register = () => {
                                 <label className="label">
                                     <span className="label-text font-medium flex items-center gap-2 text-base-content">
                                         <Mail className="h-4 w-4 text-primary" />
-                                        Email
+                                        Email professionnel
                                         <span className="text-error">*</span>
                                     </span>
                                 </label>
@@ -221,7 +222,7 @@ const Register = () => {
                                     name="email"
                                     control={control}
                                     type="email"
-                                    placeholder="votre@email.com"
+                                    placeholder="contact@apg-assainissement.com"
                                     disabled={isLoading}
                                 />
                             </div>
@@ -317,7 +318,7 @@ const Register = () => {
                                         name="phone_number"
                                         control={control}
                                         type="tel"
-                                        placeholder="+221 XX XXX XX XX"
+                                        placeholder="+221 77 000 00 00"
                                         disabled={isLoading}
                                     />
                                 </div>
@@ -326,13 +327,16 @@ const Register = () => {
                             <div className="grid grid-cols-1 gap-4 mb-4">
                                 <div className="form-control w-full">
                                     <label className="label">
-                                        <span className="label-text font-medium text-base-content">Adresse</span>
+                                        <span className="label-text font-medium flex items-center gap-2 text-base-content">
+                                            <MapPin className="h-4 w-4 text-primary" />
+                                            Adresse
+                                        </span>
                                     </label>
                                     <MyTextField
                                         name="address"
                                         control={control}
                                         type="text"
-                                        placeholder="Votre adresse complète"
+                                        placeholder="Quartier, Ville, Pays"
                                         disabled={isLoading}
                                     />
                                 </div>
@@ -341,7 +345,10 @@ const Register = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                 <div className="form-control w-full">
                                     <label className="label">
-                                        <span className="label-text font-medium text-base-content">Date de naissance</span>
+                                        <span className="label-text font-medium flex items-center gap-2 text-base-content">
+                                            <Calendar className="h-4 w-4 text-primary" />
+                                            Date de naissance
+                                        </span>
                                     </label>
                                     <MyTextField
                                         name="birthday"
@@ -355,7 +362,7 @@ const Register = () => {
 
                             <div className="divider text-base-content/40 text-xs">INFORMATIONS PROFESSIONNELLES</div>
 
-                            {/* Rôle - Sélection Admin ou Vendeur */}
+                            {/* Rôle - Sélection Admin ou Agent */}
                             <div className="form-control w-full mb-4">
                                 <label className="label">
                                     <span className="label-text font-medium flex items-center gap-2 text-base-content">
@@ -411,20 +418,20 @@ const Register = () => {
                                             <ul className="text-xs mt-1 space-y-0.5 text-base-content/70">
                                                 {watchedRole === 'admin' && (
                                                     <>
-                                                        <li>✓ Accès total à toutes les fonctionnalités</li>
+                                                        <li>✓ Accès total à la gestion du service</li>
                                                         <li>✓ Gestion des utilisateurs et des rôles</li>
-                                                        <li>✓ Accès à l'administration complète</li>
-                                                        <li>✓ Gestion des produits, ventes et stocks</li>
-                                                        <li>✓ Gestion financière et rapports</li>
+                                                        <li>✓ Planification des tournées de collecte</li>
+                                                        <li>✓ Gestion des clients et de la facturation</li>
+                                                        <li>✓ Rapports et statistiques de recyclage</li>
                                                     </>
                                                 )}
-                                                {watchedRole === 'vendeur' && (
+                                                {watchedRole === 'agent' && (
                                                     <>
-                                                        <li>✓ Traitement des ventes</li>
-                                                        <li>✓ Consultation des produits</li>
-                                                        <li>✓ Gestion des clients</li>
-                                                        <li>✓ Suivi des ventes</li>
-                                                        <li>✓ Gestion de la caisse</li>
+                                                        <li>✓ Exécution des tournées de collecte</li>
+                                                        <li>✓ Suivi des points de collecte</li>
+                                                        <li>✓ Gestion des clients résidentiels</li>
+                                                        <li>✓ Signalement des anomalies</li>
+                                                        <li>✓ Mise à jour des statuts de collecte</li>
                                                     </>
                                                 )}
                                             </ul>
@@ -475,7 +482,7 @@ const Register = () => {
                         {/* Footer */}
                         <div className="text-center pt-4 mt-4 border-t border-base-200">
                             <p className="text-xs text-base-content/40">
-                                © 2025 SODEPSI
+                                © 2025 APG Assainissement - Gestion des Déchets Domestiques
                             </p>
                         </div>
                     </div>
