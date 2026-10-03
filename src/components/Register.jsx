@@ -4,10 +4,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as yup from "yup"
-import { 
-    UserPlus, Mail, Lock, User, Phone, Building2, 
+import {
+    UserPlus, Mail, Lock, User, Phone, Building2,
     Shield, AlertCircle, ArrowRight, Truck, UserCog,
-    Recycle, Leaf, MapPin, Calendar
+    Recycle, Leaf, MapPin, Calendar,
+    Users, Calculator, Package
 } from 'lucide-react'
 import MyTextField from './forms/MyTextField'
 import MyPassField from './forms/MyPassField'
@@ -15,22 +16,56 @@ import MyMessage from './Message'
 import AxiosInstance from './AxiosInstance'
 import logo from '../assets/logo.svg'
 
-// Configuration des rôles (Admin & Agent de Collecte)
+// ============================================================
+// LES 6 RÔLES APG
+// ============================================================
 const ROLES = [
-    { 
-        value: 'admin', 
-        label: 'Administrateur', 
-        description: 'Accès total à la gestion du service', 
+    {
+        value: 'pdg',
+        label: 'PDG / Administrateur Général',
+        description: 'Accès total à la plateforme',
         icon: Shield,
         color: 'error',
         requiresApproval: false
     },
-    { 
-        value: 'agent', 
-        label: 'Agent de Collecte', 
-        description: 'Gestion des tournées et des clients', 
+    {
+        value: 'rh',
+        label: 'Responsable RH',
+        description: 'Personnel, présences, congés, paie',
+        icon: Users,
+        color: 'primary',
+        requiresApproval: false
+    },
+    {
+        value: 'comptable',
+        label: 'Responsable Comptabilité',
+        description: 'Facturation, recouvrement, finances',
+        icon: Calculator,
+        color: 'warning',
+        requiresApproval: false
+    },
+    {
+        value: 'logistique',
+        label: 'Responsable Logistique',
+        description: 'Stocks, tricycles, carburant, maintenance',
+        icon: Package,
+        color: 'info',
+        requiresApproval: false
+    },
+    {
+        value: 'superviseur',
+        label: 'Superviseur Exploitation',
+        description: 'Missions, équipes, terrain',
         icon: Truck,
         color: 'success',
+        requiresApproval: false
+    },
+    {
+        value: 'employe',
+        label: 'Employé / Agent',
+        description: 'Accès limité (self-service)',
+        icon: UserCog,
+        color: 'neutral',
         requiresApproval: false
     }
 ]
@@ -59,7 +94,10 @@ const Register = () => {
             .oneOf([yup.ref('password')], 'Les mots de passe ne correspondent pas'),
         role: yup.string()
             .required('Rôle requis')
-            .oneOf(['admin', 'agent']), // Changé de vendeur à agent
+            .oneOf(
+                ['pdg', 'rh', 'comptable', 'logistique', 'superviseur', 'employe'],
+                'Rôle invalide'
+            ),
         first_name: yup.string()
             .max(200, 'Trop long')
             .optional(),
@@ -82,10 +120,10 @@ const Register = () => {
 
     const { handleSubmit, control, watch, formState: { errors } } = useForm({
         resolver: yupResolver(schema),
-        defaultValues: { 
-            role: 'agent', // Rôle par défaut changé
-            first_name: '', 
-            last_name: '', 
+        defaultValues: {
+            role: 'employe', // Rôle par défaut
+            first_name: '',
+            last_name: '',
             username: '',
             phone_number: '',
             address: '',
@@ -101,7 +139,7 @@ const Register = () => {
         setShowMessage(false)
 
         const { password2, ...submitData } = data
-        
+
         // Nettoyer les champs vides
         Object.keys(submitData).forEach(key => {
             if (submitData[key] === '' || submitData[key] === null) {
@@ -115,21 +153,21 @@ const Register = () => {
             .then((response) => {
                 const roleInfo = ROLES.find(r => r.value === data.role)
                 const roleLabel = roleInfo?.label || data.role
-                
+
                 setMessageText(`✅ Inscription réussie ! Compte ${roleLabel} créé avec succès.`)
                 setMessageType('success')
                 setShowMessage(true)
-                
+
                 // Rediriger vers la page de connexion après 3 secondes
                 setTimeout(() => navigate('/'), 3000)
             })
             .catch((error) => {
                 console.error('❌ Erreur inscription:', error)
                 let errorMessage = 'Échec de l\'inscription'
-                
+
                 if (error.response?.data?.email) {
-                    errorMessage = Array.isArray(error.response.data.email) 
-                        ? error.response.data.email[0] 
+                    errorMessage = Array.isArray(error.response.data.email)
+                        ? error.response.data.email[0]
                         : 'Cet email est déjà utilisé'
                 } else if (error.response?.data?.phone_number) {
                     errorMessage = Array.isArray(error.response.data.phone_number)
@@ -150,7 +188,7 @@ const Register = () => {
                 } else {
                     errorMessage = error.message || 'Une erreur est survenue'
                 }
-                
+
                 setMessageText(errorMessage)
                 setMessageType('error')
                 setShowMessage(true)
@@ -165,12 +203,6 @@ const Register = () => {
         return <IconComponent className="h-4 w-4" />
     }
 
-    // Obtenir le label du rôle
-    const getRoleLabel = (roleValue) => {
-        const role = ROLES.find(r => r.value === roleValue)
-        return role?.label || roleValue
-    }
-
     return (
         <div className="min-h-screen bg-base-200 py-8 px-4 relative">
             {/* Fond décoratif */}
@@ -178,13 +210,13 @@ const Register = () => {
                 <div className="absolute top-20 right-20 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
                 <div className="absolute bottom-20 left-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl"></div>
             </div>
-            
+
             {/* Message de notification */}
             {showMessage && (
                 <div className="fixed top-4 right-4 z-50 animate-slide-in">
-                    <MyMessage 
-                        text={messageText} 
-                        color={messageType === 'success' ? 'var(--color-success)' : 'var(--color-error)'} 
+                    <MyMessage
+                        text={messageText}
+                        color={messageType === 'success' ? 'var(--color-success)' : 'var(--color-error)'}
                     />
                 </div>
             )}
@@ -196,9 +228,9 @@ const Register = () => {
                         <div className="text-center mb-6">
                             <div className="inline-flex justify-center items-center gap-2 mb-2">
                                 <div className="p-2 rounded-lg bg-primary/10">
-                                    <img 
-                                        src={logo} 
-                                        alt="Logo APG Assainissement" 
+                                    <img
+                                        src={logo}
+                                        alt="Logo APG Assainissement"
                                         className="h-10 w-10 object-contain"
                                     />
                                 </div>
@@ -318,7 +350,7 @@ const Register = () => {
                                         name="phone_number"
                                         control={control}
                                         type="tel"
-                                        placeholder="+221 77 000 00 00"
+                                        placeholder="+224 622 00 00 00"
                                         disabled={isLoading}
                                     />
                                 </div>
@@ -362,7 +394,7 @@ const Register = () => {
 
                             <div className="divider text-base-content/40 text-xs">INFORMATIONS PROFESSIONNELLES</div>
 
-                            {/* Rôle - Sélection Admin ou Agent */}
+                            {/* Rôle - Sélection parmi les 6 rôles APG */}
                             <div className="form-control w-full mb-4">
                                 <label className="label">
                                     <span className="label-text font-medium flex items-center gap-2 text-base-content">
@@ -381,8 +413,8 @@ const Register = () => {
                                                 className={`
                                                     flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer
                                                     transition-all duration-200
-                                                    ${isSelected 
-                                                        ? `border-${role.color} bg-${role.color}/10 shadow-md` 
+                                                    ${isSelected
+                                                        ? `border-${role.color} bg-${role.color}/10 shadow-md`
                                                         : 'border-base-200 hover:border-primary/50'
                                                     }
                                                 `}
@@ -416,22 +448,58 @@ const Register = () => {
                                         <div className="text-sm">
                                             <p className="font-medium">Permissions du rôle {selectedRole.label} :</p>
                                             <ul className="text-xs mt-1 space-y-0.5 text-base-content/70">
-                                                {watchedRole === 'admin' && (
+                                                {watchedRole === 'pdg' && (
                                                     <>
-                                                        <li>✓ Accès total à la gestion du service</li>
+                                                        <li>✓ Accès total à tous les modules</li>
                                                         <li>✓ Gestion des utilisateurs et des rôles</li>
-                                                        <li>✓ Planification des tournées de collecte</li>
-                                                        <li>✓ Gestion des clients et de la facturation</li>
-                                                        <li>✓ Rapports et statistiques de recyclage</li>
+                                                        <li>✓ Validation finale des opérations</li>
+                                                        <li>✓ Tableau de bord général</li>
+                                                        <li>✓ Journal d'audit complet</li>
                                                     </>
                                                 )}
-                                                {watchedRole === 'agent' && (
+                                                {watchedRole === 'rh' && (
                                                     <>
-                                                        <li>✓ Exécution des tournées de collecte</li>
-                                                        <li>✓ Suivi des points de collecte</li>
-                                                        <li>✓ Gestion des clients résidentiels</li>
-                                                        <li>✓ Signalement des anomalies</li>
-                                                        <li>✓ Mise à jour des statuts de collecte</li>
+                                                        <li>✓ Dossiers du personnel</li>
+                                                        <li>✓ Gestion des contrats</li>
+                                                        <li>✓ Présences et absences</li>
+                                                        <li>✓ Validation des congés</li>
+                                                        <li>✓ Préparation de la paie</li>
+                                                    </>
+                                                )}
+                                                {watchedRole === 'comptable' && (
+                                                    <>
+                                                        <li>✓ Facturation et devis</li>
+                                                        <li>✓ Recouvrement et créances</li>
+                                                        <li>✓ Encaissements / décaissements</li>
+                                                        <li>✓ Suivi des clients</li>
+                                                        <li>✓ Rapports comptables</li>
+                                                    </>
+                                                )}
+                                                {watchedRole === 'logistique' && (
+                                                    <>
+                                                        <li>✓ Gestion des stocks (entrées/sorties)</li>
+                                                        <li>✓ Tricycles et véhicules</li>
+                                                        <li>✓ Carburant et consommation</li>
+                                                        <li>✓ Maintenance et pièces</li>
+                                                        <li>✓ Rapports logistiques</li>
+                                                    </>
+                                                )}
+                                                {watchedRole === 'superviseur' && (
+                                                    <>
+                                                        <li>✓ Gestion des missions</li>
+                                                        <li>✓ Équipes et présences terrain</li>
+                                                        <li>✓ Activités réalisées</li>
+                                                        <li>✓ Incidents et rapports</li>
+                                                        <li>✓ Demandes de décaissement</li>
+                                                    </>
+                                                )}
+                                                {watchedRole === 'employe' && (
+                                                    <>
+                                                        <li>✓ Consultation de son profil</li>
+                                                        <li>✓ Ses présences</li>
+                                                        <li>✓ Demande de congé</li>
+                                                        <li>✓ Consultation de ses fiches de paie</li>
+                                                        <li>✓ Ses notifications</li>
                                                     </>
                                                 )}
                                             </ul>
@@ -442,7 +510,7 @@ const Register = () => {
 
                             {/* Boutons d'action */}
                             <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                                <button 
+                                <button
                                     type="submit"
                                     disabled={isLoading}
                                     className="btn bg-primary text-primary-content border-primary hover:bg-primary/90 flex-1"

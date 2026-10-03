@@ -8,7 +8,10 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoutes';
 import PasswordResetRequest from './components/PasswordResetRequest';
 import PasswordReset from './components/PasswordReset';
-
+import EtablissementSettings from './components/settings/EtablissementSettings';
+import Utilisateurs from './components/utilisateurs/Utilisateurs';
+import UtilisateurForm from './components/utilisateurs/UtilisateurForm';
+import UtilisateurDetails from './components/utilisateurs/UtilisateurDetails';
 
 function App() {
   const location = useLocation();
@@ -41,7 +44,11 @@ function App() {
 
 
 
-
+                <Route path="/utilisateurs" element={<Utilisateurs />} />
+                <Route path="/utilisateurs/ajouter" element={<UtilisateurForm />} />
+                <Route path="/utilisateurs/:id" element={<UtilisateurDetails />} />
+                <Route path="/utilisateurs/:id/modifier" element={<UtilisateurForm />} />
+  <Route path="/company-config" element={<EtablissementSettings />} />
                
               </Route>
             </Routes>
