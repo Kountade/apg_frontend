@@ -1,4 +1,4 @@
-// src/components/Navbar.jsx - Version APG Assainissement (6 rôles)
+// src/components/Navbar.jsx - Version APG Assainissement (6 rôles) - SANS ORANGE
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -27,13 +27,13 @@ import axiosInstance from './AxiosInstance';
 const ROLE_CONFIG = {
   pdg: {
     label: 'PDG / Administrateur Général',
-    color: 'error',
+    color: 'info',        // ✅ Bleu Cyan (au lieu de error/orange)
     icon: Shield,
     level: 100
   },
   admin: {  // Alias historique → traité comme pdg
     label: 'PDG / Administrateur Général',
-    color: 'error',
+    color: 'info',        // ✅ Bleu Cyan (au lieu de error/orange)
     icon: Shield,
     level: 100
   },
@@ -137,7 +137,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
 
   const user = getUserData();
   const rawRole = user?.role || 'employe';
-  // Normaliser 'admin' vers 'pdg'
   const role = rawRole === 'admin' ? 'pdg' : rawRole;
 
   const userEmail = user?.email || '';
@@ -154,7 +153,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   const formattedDate = currentTime.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
   // ============================================================
-  // ✅ PERMISSIONS PAR RÔLE (selon cahier des charges APG)
+  // ✅ PERMISSIONS PAR RÔLE
   // ============================================================
   const isPDG = role === 'pdg';
   const isRH = role === 'rh';
@@ -163,7 +162,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   const isSuperviseur = role === 'superviseur';
   const isEmploye = role === 'employe';
 
-  // Accès combinés
   const isStaff = isPDG || isRH || isComptable || isLogistique || isSuperviseur;
 
   useEffect(() => {
@@ -278,7 +276,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   // ✅ MENU ALIGNÉ SUR LE CAHIER DES CHARGES APG
   // ============================================================
   const menuSections = [
-    // 1. TABLEAU DE BORD
     {
       name: 'TABLEAU DE BORD',
       icon: LayoutDashboard,
@@ -290,8 +287,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'kpi', text: 'Indicateurs (KPI)', icon: Gauge, path: '/kpi', permission: isPDG }
       ]
     },
-
-    // 2. ADMINISTRATION (PDG uniquement)
     {
       name: 'ADMINISTRATION',
       icon: Shield,
@@ -312,8 +307,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'api-keys', text: 'Clés API', icon: Key, path: '/api-keys', permission: isPDG }
       ]
     },
-
-    // 3. RESSOURCES HUMAINES
     {
       name: 'RESSOURCES HUMAINES',
       icon: Users,
@@ -341,8 +334,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'formations', text: 'Formations', icon: BookOpen, path: '/formations', permission: isPDG || isRH }
       ]
     },
-
-    // 4. PAIE
     {
       name: 'PAIE',
       icon: Wallet,
@@ -366,8 +357,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'rapports-paie', text: 'Rapports Paie', icon: FileSpreadsheet, path: '/rapports-paie', permission: isPDG || isRH || isComptable }
       ]
     },
-
-    // 5. CLIENTS & CONTRATS
     {
       name: 'CLIENTS & CONTRATS',
       icon: Users,
@@ -392,8 +381,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'avoirs', text: 'Avoirs', icon: FileMinus, path: '/avoirs', permission: isPDG || isComptable }
       ]
     },
-
-    // 6. FACTURATION & RECOUVREMENT
     {
       name: 'FACTURATION & RECOUVREMENT',
       icon: Receipt,
@@ -411,8 +398,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'paiements-clients', text: 'Paiements Clients', icon: CreditCard, path: '/paiements-clients', permission: isPDG || isComptable }
       ]
     },
-
-    // 7. TRÉSORERIE
     {
       name: 'TRÉSORERIE',
       icon: Wallet,
@@ -436,8 +421,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'alertes-tresorerie', text: 'Alertes Trésorerie', icon: AlertCircle, path: '/alertes-tresorerie', permission: isPDG || isComptable }
       ]
     },
-
-    // 8. COMPTABILITÉ
     {
       name: 'COMPTABILITÉ',
       icon: Calculator,
@@ -459,8 +442,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'rapports-comptables', text: 'Rapports Comptables', icon: FileSpreadsheet, path: '/rapports-comptables', permission: isPDG || isComptable }
       ]
     },
-
-    // 9. LOGISTIQUE & STOCKS
     {
       name: 'LOGISTIQUE & STOCKS',
       icon: Package,
@@ -484,8 +465,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'rapports-stocks', text: 'Rapports Stocks', icon: FileSpreadsheet, path: '/rapports-stocks', permission: isPDG || isLogistique }
       ]
     },
-
-    // 10. TRICYCLES & VÉHICULES
     {
       name: 'TRICYCLES & VÉHICULES',
       icon: Truck,
@@ -504,8 +483,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'rapports-vehicules', text: 'Rapports Véhicules', icon: FileSpreadsheet, path: '/rapports-vehicules', permission: isPDG || isLogistique }
       ]
     },
-
-    // 11. CARBURANT & MAINTENANCE
     {
       name: 'CARBURANT & MAINTENANCE',
       icon: Droplet,
@@ -524,8 +501,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'rapports-carburant', text: 'Rapports Carburant', icon: FileSpreadsheet, path: '/rapports-carburant', permission: isPDG || isLogistique }
       ]
     },
-
-    // 12. EXPLOITATION / MISSIONS
     {
       name: 'EXPLOITATION / MISSIONS',
       icon: HardHat,
@@ -545,8 +520,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'rapports-terrain', text: 'Rapports Terrain', icon: FileSpreadsheet, path: '/rapports-terrain', permission: isPDG || isSuperviseur }
       ]
     },
-
-    // 13. FOURNISSEURS & ACHATS
     {
       name: 'FOURNISSEURS & ACHATS',
       icon: Briefcase,
@@ -568,8 +541,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'paiements-fournisseurs', text: 'Paiements Fournisseurs', icon: CreditCard, path: '/paiements-fournisseurs', permission: isPDG || isComptable }
       ]
     },
-
-    // 14. DOCUMENTS
     {
       name: 'DOCUMENTS',
       icon: Archive,
@@ -587,8 +558,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'archives-documents', text: 'Archives', icon: Archive, path: '/archives-documents', permission: isPDG }
       ]
     },
-
-    // 15. RAPPORTS
     {
       name: 'RAPPORTS',
       icon: FileText,
@@ -604,8 +573,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'rapports-pdg', text: 'Rapports Direction', icon: Target, path: '/rapports-pdg', permission: isPDG }
       ]
     },
-
-    // 16. ALERTES
     {
       name: 'ALERTES',
       icon: BellRing,
@@ -621,8 +588,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'canaux-notification', text: 'Canaux de Notification', icon: Send, path: '/canaux-notification', permission: isPDG }
       ]
     },
-
-    // 17. MON ESPACE
     {
       name: 'MON ESPACE',
       icon: UserCircle,
@@ -695,7 +660,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
             ? 'bg-primary text-primary-content shadow-md'
             : 'text-base-content/60 hover:bg-primary/10 hover:text-primary'
           }
-          ${isNewItem && !isActive ? 'border-l-2 border-primary pl-3' : ''}
+          ${isNewItem && !isActive ? 'border-l-2 border-secondary pl-3' : ''}
         `}
       >
         {ItemIcon && <ItemIcon className={`w-4 h-4 ${isActive ? 'text-inherit' : ''}`} />}
@@ -813,7 +778,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       )}
 
       {/* Barre supérieure */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-primary to-primary/90 shadow-lg border-b-2 border-accent">
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-primary to-primary/90 shadow-lg border-b-2 border-primary/30">
         <div className="px-4 sm:px-6 lg:pl-72">
           <div className="flex items-center justify-between h-16">
 
@@ -836,7 +801,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
               <Link to="/dashboard" className="hidden lg:flex items-center gap-3 group">
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary-content/20 rounded-xl blur-md group-hover:blur-lg transition-all"></div>
-                  <div className="relative w-10 h-10 bg-base-100 rounded-xl flex items-center justify-center shadow-lg border-2 border-accent overflow-hidden">
+                  <div className="relative w-10 h-10 bg-base-100 rounded-xl flex items-center justify-center shadow-lg border-2 border-secondary overflow-hidden">
                     {!loadingEtab && logoUrl ? (
                       <img
                         src={logoUrl}
@@ -860,7 +825,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
               </Link>
 
               <div className="lg:hidden flex items-center gap-2">
-                <div className="w-8 h-8 bg-base-100 rounded-lg flex items-center justify-center border-2 border-accent overflow-hidden">
+                <div className="w-8 h-8 bg-base-100 rounded-lg flex items-center justify-center border-2 border-secondary overflow-hidden">
                   {!loadingEtab && logoUrl ? (
                     <img
                       src={logoUrl}
@@ -948,6 +913,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                             <p className="font-semibold">{userFullName || userName}</p>
                             <p className="text-xs text-primary-content/70 truncate">{userEmail}</p>
                             <div className="flex flex-wrap gap-1 mt-1">
+                              {/* ✅ BADGE RÔLE — Bleu Cyan pour PDG/Admin */}
                               <span className={`badge badge-${roleConfig.color} badge-sm`}>
                                 {roleConfig.label}
                               </span>
@@ -1039,6 +1005,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                   <p className="font-semibold text-sm truncate text-base-content">{userFullName || userName}</p>
                   <p className="text-xs text-base-content/50 truncate">{userEmail}</p>
                   <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    {/* ✅ BADGE RÔLE SIDEBAR — Bleu Cyan pour PDG/Admin */}
                     <span className={`badge badge-${roleConfig.color} badge-sm`}>
                       <RoleIcon className="w-3 h-3 mr-1" />
                       {roleConfig.label}

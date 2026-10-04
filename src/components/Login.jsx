@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, Link } from 'react-router-dom'
 import AxiosInstance from './AxiosInstance'
-// Remplacez ces imports par vos propres images
-import logo from '../assets/logo.svg' 
-import backgroundImage from '../assets/background-login.jpg'
-import { 
+import logoFallback from '../assets/logo.svg'
+import {
   Mail, Lock, Eye, EyeOff, LogIn, UserPlus, AlertCircle, CheckCircle,
-  Shield, Building2, LayoutDashboard, Users, TrendingUp, Clock,
-  Award, Sparkles, ArrowRight, Store, BarChart3, Settings,
-  Headphones, Star, Zap, Trash2, Truck, Leaf, Recycle // Ajout d'icônes pertinentes
+  Truck, Recycle, Users, BarChart3, ShieldCheck,
+  Building2, Globe
 } from 'lucide-react'
 
 const Login = () => {
@@ -26,6 +23,42 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false)
   const [currentYear] = useState(new Date().getFullYear())
 
+  // ============================================================
+  // ÉTABLISSEMENT (logo + nom dynamiques)
+  // ============================================================
+  const [etablissement, setEtablissement] = useState(null)
+  const [loadingEtab, setLoadingEtab] = useState(true)
+  const [logoUrl, setLogoUrl] = useState(null)
+
+  const getLogoUrl = (logoPath) => {
+    if (!logoPath) return null
+    if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) return logoPath
+    const baseURL = AxiosInstance.defaults.baseURL || ''
+    if (logoPath.startsWith('/media/') || logoPath.startsWith('/static/')) return `${baseURL}${logoPath}`
+    return `${baseURL}${logoPath.startsWith('/') ? '' : '/'}${logoPath}`
+  }
+
+  useEffect(() => {
+    const fetchEtablissement = async () => {
+      try {
+        const response = await AxiosInstance.get('/etablissements/unique/')
+        if (response.data) {
+          setEtablissement(response.data)
+          if (response.data.logo) setLogoUrl(getLogoUrl(response.data.logo))
+        }
+      } catch (error) {
+        console.error('Erreur établissement:', error)
+      } finally {
+        setLoadingEtab(false)
+      }
+    }
+    fetchEtablissement()
+  }, [])
+
+  const companyName = !loadingEtab ? (etablissement?.nom || 'APG ASSAINISSEMENT') : 'APG ASSAINISSEMENT'
+  const companySigle = !loadingEtab ? (etablissement?.sigle || 'Gestion des Déchets Domestiques') : 'Gestion des Déchets Domestiques'
+  const companyLogo = logoUrl || logoFallback
+
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail')
     if (savedEmail) setRememberMe(true)
@@ -40,33 +73,33 @@ const Login = () => {
         email: data.email,
         password: data.password,
       })
-      
+
       localStorage.setItem('Token', response.data.token)
       localStorage.setItem('User', JSON.stringify(response.data.user))
-      
+
       if (rememberMe) {
         localStorage.setItem('rememberedEmail', data.email)
       } else {
         localStorage.removeItem('rememberedEmail')
       }
-      
-      setMessageText('Connexion réussie ! Redirection en cours...')
+
+      setMessageText('Connexion réussie. Redirection en cours...')
       setMessageType('success')
       setShowMessage(true)
-      
-      setTimeout(() => navigate('/dashboard'), 1500)
-      
+
+      setTimeout(() => navigate('/dashboard'), 1200)
+
     } catch (error) {
       let errorMessage = 'Échec de connexion. Veuillez réessayer.'
       if (error.response) {
-        if (error.response.status === 401) errorMessage = 'Email ou mot de passe incorrect'
+        if (error.response.status === 401) errorMessage = 'Email ou mot de passe incorrect.'
         else if (error.response.status === 403) errorMessage = 'Compte désactivé. Contactez l\'administrateur.'
         else if (error.response.status === 429) errorMessage = 'Trop de tentatives. Veuillez patienter 5 minutes.'
         else if (error.response.data && error.response.data.error) errorMessage = error.response.data.error
       } else if (error.request) {
         errorMessage = 'Serveur inaccessible. Vérifiez votre connexion internet.'
       }
-      
+
       setMessageText(errorMessage)
       setMessageType('error')
       setShowMessage(true)
@@ -76,7 +109,6 @@ const Login = () => {
     }
   }
 
-  // Icônes et textes adaptés pour APG
   const features = [
     { icon: Truck, text: 'Gestion des collectes' },
     { icon: Recycle, text: 'Suivi du recyclage' },
@@ -84,41 +116,13 @@ const Login = () => {
     { icon: BarChart3, text: 'Statistiques et rapports' }
   ]
 
-  const testimonials = [
-    { 
-      icon: Leaf, 
-      text: 'Pour un environnement plus propre',
-      author: 'APG Assainissement'
-    },
-    { 
-      icon: Headphones, 
-      text: 'Support client dédié',
-      author: 'Équipe APG'
-    }
-  ]
-
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-base-200">
-      
-      {/* Background decorative elements */}
+
+      {/* Fond décoratif discret */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full filter blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/10 rounded-full filter blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/5 rounded-full filter blur-3xl"></div>
-        
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1.5 h-1.5 rounded-full"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              backgroundColor: ['primary', 'secondary', 'accent', 'info', 'success'][Math.floor(Math.random() * 5)],
-              opacity: 0.1 + Math.random() * 0.2,
-              animation: `float ${6 + Math.random() * 8}s infinite ease-in-out ${Math.random() * 5}s`
-            }}
-          />
-        ))}
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/5 rounded-full filter blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-secondary/5 rounded-full filter blur-3xl"></div>
       </div>
 
       {showMessage && (
@@ -137,119 +141,194 @@ const Login = () => {
 
       <div className="container mx-auto px-4 relative z-10 max-w-6xl">
         <div className="grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl bg-base-100 border border-base-300/30">
-          
-          {/* Colonne gauche - Branding APG */}
-          <div className="hidden lg:flex relative bg-gradient-to-br from-primary to-primary/90 overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-content/10 rounded-full filter blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-80 h-80 bg-primary-content/5 rounded-full filter blur-3xl"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-content/5 rounded-full filter blur-3xl"></div>
-            
-            <div className="relative z-10 p-8 text-primary-content flex flex-col justify-between h-full">
-              
-              <div>
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-12 h-12 bg-primary-content/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-primary-content/10">
-                    <Recycle className="w-6 h-6" /> {/* Icône changée pour le recyclage */}
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold tracking-tight">APG ASSAINISSEMENT</h1>
-                    <p className="text-sm text-primary-content/70">Gestion des Déchets Domestiques</p>
-                  </div>
+
+          {/* ============================================ */}
+          {/* COLONNE GAUCHE — BRANDING INSTITUTIONNEL      */}
+          {/* ============================================ */}
+          <div className="hidden lg:flex relative bg-primary overflow-hidden">
+            {/* Motif discret */}
+            <div className="absolute inset-0 opacity-[0.04]" style={{
+              backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+              backgroundSize: '24px 24px'
+            }}></div>
+
+            <div className="relative z-10 p-10 text-primary-content flex flex-col justify-between h-full w-full">
+
+              {/* ============================================ */}
+              {/* ✅ LOGO + NOM + SIGLE CENTRÉS AU MILIEU       */}
+              {/* ============================================ */}
+              <div className="flex flex-col items-center text-center">
+                {/* Logo centré */}
+                <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-xl border-2 border-secondary overflow-hidden mb-5">
+                  {!loadingEtab && logoUrl ? (
+                    <img
+                      src={logoUrl}
+                      alt={companyName}
+                      className="w-full h-full object-cover rounded-2xl"
+                      onError={(e) => { e.target.src = logoFallback; }}
+                    />
+                  ) : (
+                    <img
+                      src={logoFallback}
+                      alt={companyName}
+                      className="w-12 h-12 object-contain"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  )}
                 </div>
-                
-                <h2 className="text-3xl font-bold mb-4 leading-tight">
-                  Gérez votre service de
-                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-accent to-secondary">
-                    collecte et recyclage
-                  </span>
+
+                {/* Nom centré */}
+                <h1 className="text-2xl font-bold tracking-tight text-primary-content leading-tight mb-1">
+                  {loadingEtab ? 'Chargement...' : companyName}
+                </h1>
+
+                {/* Sigle centré */}
+                <p className="text-sm text-primary-content/70">
+                  {loadingEtab ? '' : companySigle}
+                </p>
+
+                {/* Petit séparateur décoratif */}
+                <div className="w-16 h-0.5 bg-secondary rounded-full mt-5"></div>
+              </div>
+
+              {/* Titre + description centrés */}
+              <div className="text-center mt-10">
+                <h2 className="text-2xl font-bold mb-3 leading-tight text-primary-content">
+                  Plateforme de gestion
                 </h2>
-                
-                <p className="text-sm text-primary-content/80 leading-relaxed mb-8">
-                  Plateforme de gestion pour la prestation de gestion des déchets.
+                <p className="text-sm text-primary-content/75 leading-relaxed max-w-xs mx-auto">
+                  Solution intégrée pour la gestion complète de vos activités
+                  de collecte, traitement et valorisation des déchets.
                 </p>
               </div>
-              
-              <div className="space-y-4 mb-8">
+
+              {/* Liste des fonctionnalités — centrée */}
+              <div className="space-y-3 my-10 max-w-xs mx-auto w-full">
                 {features.map((feature, idx) => (
-                  <div key={idx} className="flex items-center gap-4 group">
-                    <div className="w-10 h-10 rounded-xl bg-primary-content/10 flex items-center justify-center group-hover:bg-primary-content/20 transition backdrop-blur-sm border border-primary-content/10">
-                      <feature.icon className="w-5 h-5" />
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0 border border-white/10">
+                      <feature.icon className="w-4 h-4 text-primary-content" />
                     </div>
-                    <span className="text-sm font-medium">{feature.text}</span>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="space-y-3 pt-4 border-t border-primary-content/10">
-                {testimonials.map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <item.icon className="w-4 h-4 text-accent mt-0.5" />
-                    <div>
-                      <p className="text-sm text-primary-content/90 italic">"{item.text}"</p>
-                      <p className="text-xs text-primary-content/50">- {item.author}</p>
-                    </div>
+                    <span className="text-sm font-medium text-primary-content/90 text-left">
+                      {feature.text}
+                    </span>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-primary-content/10 flex items-center gap-3">
-                <Zap className="w-4 h-4 text-accent" />
-                <p className="text-xs text-primary-content/60">Version 1.0 - APG Digital</p>
+              {/* Footer institutionnel */}
+              <div className="space-y-4 pt-6 border-t border-white/10">
+                <div className="flex items-center justify-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-secondary" />
+                  <span className="text-xs text-primary-content/70">
+                    Connexion sécurisée SSL 256-bit
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-primary-content/50">
+                  <div className="flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>APG Digital</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>www.apg-assainissement.com</span>
+                  </div>
+                </div>
+
+                <p className="text-xs text-primary-content/40 text-center">
+                  Version 1.0 — © {currentYear} {companyName}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Colonne droite - Formulaire */}
-          <div className="flex items-center justify-center p-8 md:p-10 bg-base-100">
+          {/* ============================================ */}
+          {/* COLONNE DROITE — FORMULAIRE                   */}
+          {/* ============================================ */}
+          <div className="flex items-center justify-center p-8 md:p-12 bg-base-100">
             <div className="w-full max-w-md">
-              
-              <form onSubmit={handleSubmit(handleLogin)} className="space-y-5">
-                
-                <div className="text-center space-y-3">
-                  <div className="w-20 h-20 mx-auto bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
-                    <img src={logo} alt="APG" className="w-12 h-12 object-contain" />
+
+              <form onSubmit={handleSubmit(handleLogin)} className="space-y-6">
+
+                {/* En-tête formulaire */}
+                <div className="space-y-5">
+                  {/* Logo mobile (visible sur petits écrans) */}
+                  <div className="lg:hidden flex justify-center">
+                    <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center shadow-md border-2 border-secondary overflow-hidden">
+                      {!loadingEtab && logoUrl ? (
+                        <img
+                          src={logoUrl}
+                          alt={companyName}
+                          className="w-full h-full object-cover rounded-xl"
+                          onError={(e) => { e.target.src = logoFallback; }}
+                        />
+                      ) : (
+                        <img
+                          src={logoFallback}
+                          alt={companyName}
+                          className="w-10 h-10 object-contain"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      )}
+                    </div>
                   </div>
-                  
-                  <div>
-                    <h2 className="text-2xl font-bold text-base-content">Bienvenue</h2>
-                    <p className="text-sm text-base-content/60">Connectez-vous à votre espace APG</p>
+
+                  <div className="text-center lg:text-left">
+                    <h2 className="text-2xl font-bold text-base-content">
+                      Connexion
+                    </h2>
+                    <p className="text-sm text-base-content/60 mt-1">
+                      Accédez à votre espace professionnel
+                    </p>
                   </div>
                 </div>
 
+                {/* Email */}
                 <div className="form-control w-full">
-                  <label className="label">
-                    <span className="label-text text-sm">Email professionnel</span>
+                  <label className="label pb-1">
+                    <span className="label-text text-sm font-medium text-base-content/80">
+                      Adresse email
+                    </span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Mail className="h-4 w-4 text-base-content/40" />
                     </div>
                     <input
                       type="email"
-                      placeholder="contact@apg-assainissement.com"
-                      className={`input input-bordered w-full pl-9 py-2.5 text-sm ${errors.email ? 'input-error' : ''}`}
+                      placeholder="prenom.nom@apg-assainissement.com"
+                      className={`input input-bordered w-full pl-10 py-2.5 text-sm focus:input-primary ${errors.email ? 'input-error' : ''}`}
                       {...register('email', {
-                        required: "Email requis",
-                        pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: "Email invalide" }
+                        required: "L'adresse email est requise",
+                        pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: "Format d'email invalide" }
                       })}
                     />
                   </div>
-                  {errors.email && <label className="label"><span className="label-text-alt text-error text-xs">{errors.email.message}</span></label>}
+                  {errors.email && (
+                    <label className="label pt-1">
+                      <span className="label-text-alt text-error text-xs">{errors.email.message}</span>
+                    </label>
+                  )}
                 </div>
 
+                {/* Mot de passe */}
                 <div className="form-control w-full">
-                  <label className="label">
-                    <span className="label-text text-sm">Mot de passe</span>
+                  <label className="label pb-1">
+                    <span className="label-text text-sm font-medium text-base-content/80">
+                      Mot de passe
+                    </span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Lock className="h-4 w-4 text-base-content/40" />
                     </div>
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      className={`input input-bordered w-full pl-9 pr-9 py-2.5 text-sm ${errors.password ? 'input-error' : ''}`}
+                      placeholder="••••••••"
+                      className={`input input-bordered w-full pl-10 pr-10 py-2.5 text-sm focus:input-primary ${errors.password ? 'input-error' : ''}`}
                       {...register('password', {
-                        required: "Mot de passe requis",
+                        required: "Le mot de passe est requis",
                         minLength: { value: 6, message: "Minimum 6 caractères" }
                       })}
                     />
@@ -257,13 +336,19 @@ const Login = () => {
                       type="button"
                       className="absolute inset-y-0 right-0 pr-3 flex items-center text-base-content/40 hover:text-base-content transition"
                       onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {errors.password && <label className="label"><span className="label-text-alt text-error text-xs">{errors.password.message}</span></label>}
+                  {errors.password && (
+                    <label className="label pt-1">
+                      <span className="label-text-alt text-error text-xs">{errors.password.message}</span>
+                    </label>
+                  )}
                 </div>
 
+                {/* Options */}
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -272,52 +357,62 @@ const Login = () => {
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
                     />
-                    <span className="text-xs text-base-content/60">Se souvenir</span>
+                    <span className="text-xs text-base-content/60">Se souvenir de moi</span>
                   </label>
-                  
-                  <Link to="/request/password_reset" className="text-xs text-primary hover:text-primary/80 transition">
+
+                  <Link
+                    to="/request/password_reset"
+                    className="text-xs text-primary hover:text-primary/80 transition font-medium"
+                  >
                     Mot de passe oublié ?
                   </Link>
                 </div>
 
+                {/* Bouton connexion */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn btn-primary w-full text-sm shadow-lg shadow-primary/20 hover:shadow-primary/30 transition"
+                  className="btn btn-primary w-full text-sm font-medium shadow-md hover:shadow-lg transition-all"
                 >
                   {loading ? (
-                    <span className="loading loading-spinner loading-sm"></span>
+                    <>
+                      <span className="loading loading-spinner loading-sm"></span>
+                      <span>Connexion...</span>
+                    </>
                   ) : (
-                    <div className="flex items-center gap-2">
+                    <>
                       <LogIn className="w-4 h-4" />
                       <span>Se connecter</span>
-                    </div>
+                    </>
                   )}
                 </button>
 
-                <div className="relative my-4">
+                {/* Séparateur */}
+                <div className="relative my-2">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-base-300"></div>
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="px-2 bg-base-100 text-base-content/40">Nouveau sur APG ?</span>
+                    <span className="px-3 bg-base-100 text-base-content/40">
+                      Pas encore de compte ?
+                    </span>
                   </div>
                 </div>
 
-                <div className="text-center">
-                  <Link
-                    to="/register"
-                    className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-primary text-primary text-sm hover:bg-primary hover:text-primary-content transition"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Créer un compte
-                  </Link>
-                </div>
+                {/* Bouton inscription */}
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl border border-base-300 text-base-content/80 text-sm font-medium hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Créer un compte
+                </Link>
 
-                <div className="flex items-center justify-center gap-4 pt-3">
+                {/* Footer discret */}
+                <div className="flex items-center justify-center gap-4 pt-4">
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>
-                    <span className="text-xs text-base-content/40">Connexion sécurisée</span>
+                    <span className="text-xs text-base-content/40">Système opérationnel</span>
                   </div>
                   <span className="text-base-content/20">•</span>
                   <span className="text-xs text-base-content/40">SSL 256-bit</span>
@@ -325,7 +420,7 @@ const Login = () => {
 
                 <div className="text-center pt-2">
                   <p className="text-xs text-base-content/30">
-                    © {currentYear} APG Assainissement. Tous droits réservés.
+                    © {currentYear} {companyName}. Tous droits réservés.
                   </p>
                 </div>
               </form>
@@ -335,15 +430,11 @@ const Login = () => {
       </div>
 
       <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-20px) scale(1.1); }
-        }
         @keyframes slideDown {
           from { opacity: 0; transform: translate(-50%, -20px); }
           to { opacity: 1; transform: translate(-50%, 0); }
         }
-        .animate-slideDown { animation: slideDown 0.5s ease-out; }
+        .animate-slideDown { animation: slideDown 0.4s ease-out; }
       `}</style>
     </div>
   )
