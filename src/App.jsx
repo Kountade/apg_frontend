@@ -13,6 +13,16 @@ import Utilisateurs from './components/utilisateurs/Utilisateurs';
 import UtilisateurForm from './components/utilisateurs/UtilisateurForm';
 import UtilisateurDetails from './components/utilisateurs/UtilisateurDetails';
 
+
+
+// src/App.jsx — Ajouter ces imports
+import Departements from './components/rh/Departements';
+import DepartementForm from './components/rh/DepartementForm';
+import DepartementDetail from './components/rh/DepartementDetail';
+import Postes from './components/rh/Postes';
+import PosteForm from './components/rh/PosteForm';
+import PosteDetail from './components/rh/PosteDetail';
+
 function App() {
   const location = useLocation();
 
@@ -43,11 +53,24 @@ function App() {
                
 
 
+//  RESSOURCES HUMAINES 
+<Route path="/departements" element={<Departements />} />
+<Route path="/departements/ajouter" element={<DepartementForm />} />
+<Route path="/departements/:id" element={<DepartementDetail />} />
+<Route path="/departements/:id/modifier" element={<DepartementForm />} />
+
+
+<Route path="/postes" element={<Postes />} />
+<Route path="/postes/ajouter" element={<PosteForm />} />
+<Route path="/postes/:id" element={<PosteDetail />} />
+<Route path="/postes/:id/modifier" element={<PosteForm />} />
 
                 <Route path="/utilisateurs" element={<Utilisateurs />} />
                 <Route path="/utilisateurs/ajouter" element={<UtilisateurForm />} />
                 <Route path="/utilisateurs/:id" element={<UtilisateurDetails />} />
                 <Route path="/utilisateurs/:id/modifier" element={<UtilisateurForm />} />
+
+                
   <Route path="/company-config" element={<EtablissementSettings />} />
                
               </Route>

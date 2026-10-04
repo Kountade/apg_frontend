@@ -1,4 +1,4 @@
-// src/components/Navbar.jsx - Version APG Assainissement (6 rôles) - SANS ORANGE
+// src/components/Navbar.jsx - Version APG Assainissement (6 rôles) - SANS ORANGE - SANS PRÉFIXE RH
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -27,13 +27,13 @@ import axiosInstance from './AxiosInstance';
 const ROLE_CONFIG = {
   pdg: {
     label: 'PDG / Administrateur Général',
-    color: 'info',        // ✅ Bleu Cyan (au lieu de error/orange)
+    color: 'info',
     icon: Shield,
     level: 100
   },
-  admin: {  // Alias historique → traité comme pdg
+  admin: {
     label: 'PDG / Administrateur Général',
-    color: 'info',        // ✅ Bleu Cyan (au lieu de error/orange)
+    color: 'info',
     icon: Shield,
     level: 100
   },
@@ -292,7 +292,8 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       icon: Shield,
       items: [
         { id: 'utilisateurs', text: 'Utilisateurs', icon: Users, path: '/utilisateurs', permission: isPDG },
-        { id: 'nouvel-utilisateur', text: 'Nouvel Utilisateur', icon: UserPlus, path: '/utilisateurs/nouveau', permission: isPDG },
+        // ✅ CORRIGÉ : /utilisateurs/ajouter (au lieu de /utilisateurs/nouveau)
+        { id: 'nouvel-utilisateur', text: 'Nouvel Utilisateur', icon: UserPlus, path: '/utilisateurs/ajouter', permission: isPDG },
         { id: 'roles', text: 'Rôles & Permissions', icon: Shield, path: '/roles', permission: isPDG },
         { id: 'separator-admin-1', text: '', icon: null, path: '#', permission: isPDG, separator: true },
         { id: 'company-config', text: 'Configuration APG', icon: Building2, path: '/company-config', permission: isPDG },
@@ -311,27 +312,48 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       name: 'RESSOURCES HUMAINES',
       icon: Users,
       items: [
-        { id: 'personnel', text: 'Personnel', icon: Users, path: '/personnel', permission: isPDG || isRH },
-        { id: 'nouvel-employe', text: 'Nouvel Employé', icon: UserPlus, path: '/personnel/nouveau', permission: isPDG || isRH },
+        // ----- Départements & Postes -----
+        { id: 'departements', text: 'Départements', icon: Building2, path: '/departements', permission: isPDG || isRH },
+        { id: 'postes', text: 'Postes', icon: Briefcase, path: '/postes', permission: isPDG || isRH },
+        { id: 'separator-rh-orga', text: '', icon: null, path: '#', permission: isPDG || isRH, separator: true },
+
+        // ----- Employés -----
+        { id: 'employes', text: 'Employés', icon: Users, path: '/employes', permission: isPDG || isRH },
+        { id: 'nouvel-employe', text: 'Nouvel Employé', icon: UserPlus, path: '/employes/ajouter', permission: isPDG || isRH },
         { id: 'organigramme', text: 'Organigramme', icon: Layers, path: '/organigramme', permission: isPDG || isRH },
+        { id: 'statistiques-rh', text: 'Statistiques RH', icon: BarChart3, path: '/employes/statistiques', permission: isPDG || isRH },
         { id: 'separator-rh-1', text: '', icon: null, path: '#', permission: isPDG || isRH, separator: true },
+
+        // ----- Contrats -----
         { id: 'contrats', text: 'Contrats', icon: FileCheck, path: '/contrats', permission: isPDG || isRH, badge: contratsExpirant },
-        { id: 'nouveau-contrat', text: 'Nouveau Contrat', icon: FilePlus, path: '/contrats/nouveau', permission: isPDG || isRH },
+        { id: 'nouveau-contrat', text: 'Nouveau Contrat', icon: FilePlus, path: '/contrats/ajouter', permission: isPDG || isRH },
+        { id: 'contrats-expirant', text: 'Contrats Expirants', icon: CalendarClock, path: '/contrats/expirant', permission: isPDG || isRH, badge: contratsExpirant },
         { id: 'separator-rh-2', text: '', icon: null, path: '#', permission: isPDG || isRH, separator: true },
+
+        // ----- Présences -----
         { id: 'presences', text: 'Présences', icon: ClipboardCheck, path: '/presences', permission: isPDG || isRH },
+        { id: 'presences-aujourdhui', text: 'Présences du Jour', icon: Calendar, path: '/presences/aujourdhui', permission: isPDG || isRH },
         { id: 'pointage', text: 'Pointage', icon: Fingerprint, path: '/pointage', permission: isPDG || isRH },
         { id: 'absences', text: 'Absences', icon: AlertCircle, path: '/absences', permission: isPDG || isRH },
         { id: 'separator-rh-3', text: '', icon: null, path: '#', permission: isPDG || isRH, separator: true },
+
+        // ----- Congés -----
         { id: 'conges', text: 'Congés', icon: CalendarDays, path: '/conges', permission: isPDG || isRH, badge: congesEnAttente },
-        { id: 'demandes-conges', text: 'Demandes de Congés', icon: Inbox, path: '/conges/demandes', permission: isPDG || isRH },
-        { id: 'calendrier-conges', text: 'Calendrier Congés', icon: Calendar, path: '/conges/calendrier', permission: isPDG || isRH },
-        { id: 'soldes-conges', text: 'Soldes de Congés', icon: Calculator, path: '/conges/soldes', permission: isPDG || isRH },
+        { id: 'demandes-conges', text: 'Demandes en Attente', icon: Inbox, path: '/conges/en_attente', permission: isPDG || isRH, badge: congesEnAttente },
+        { id: 'nouveau-conge', text: 'Nouvelle Demande', icon: FilePlus, path: '/conges/ajouter', permission: isPDG || isRH },
+        { id: 'mes-conges', text: 'Mes Congés', icon: UserCheck, path: '/conges/mes_conges', permission: true },
+        { id: 'soldes-conges', text: 'Soldes de Congés', icon: Calculator, path: '/soldes-conges', permission: isPDG || isRH },
         { id: 'separator-rh-4', text: '', icon: null, path: '#', permission: isPDG || isRH, separator: true },
+
+        // ----- Jours travaillés -----
         { id: 'jours-travailles', text: 'Jours Travaillés', icon: CalendarDays, path: '/jours-travailles', permission: isPDG || isRH },
-        { id: 'documents-rh', text: 'Documents RH', icon: FolderOpen, path: '/documents-rh', permission: isPDG || isRH },
-        { id: 'etats-personnel', text: 'États du Personnel', icon: FileSpreadsheet, path: '/etats-personnel', permission: isPDG || isRH },
+        { id: 'separator-rh-5', text: '', icon: null, path: '#', permission: isPDG || isRH, separator: true },
+
+        // ----- Évaluations & Formations -----
         { id: 'evaluations', text: 'Évaluations', icon: Award, path: '/evaluations', permission: isPDG || isRH },
-        { id: 'formations', text: 'Formations', icon: BookOpen, path: '/formations', permission: isPDG || isRH }
+        { id: 'nouvelle-evaluation', text: 'Nouvelle Évaluation', icon: PlusCircle, path: '/evaluations/ajouter', permission: isPDG || isRH },
+        { id: 'formations', text: 'Formations', icon: BookOpen, path: '/formations', permission: isPDG || isRH },
+        { id: 'nouvelle-formation', text: 'Nouvelle Formation', icon: PlusCircle, path: '/formations/ajouter', permission: isPDG || isRH }
       ]
     },
     {
@@ -362,7 +384,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       icon: Users,
       items: [
         { id: 'clients', text: 'Clients', icon: Users, path: '/clients', permission: isPDG || isComptable },
-        { id: 'nouveau-client', text: 'Nouveau Client', icon: UserPlus, path: '/clients/nouveau', permission: isPDG || isComptable },
+        { id: 'nouveau-client', text: 'Nouveau Client', icon: UserPlus, path: '/clients/ajouter', permission: isPDG || isComptable },
         { id: 'clients-particuliers', text: 'Particuliers', icon: Users, path: '/clients-particuliers', permission: isPDG || isComptable },
         { id: 'clients-entreprises', text: 'Entreprises', icon: Building2, path: '/clients-entreprises', permission: isPDG || isComptable },
         { id: 'clients-administrations', text: 'Administrations', icon: Landmark, path: '/clients-administrations', permission: isPDG || isComptable },
@@ -370,13 +392,13 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'clients-collectivites', text: 'Collectivités', icon: Map, path: '/clients-collectivites', permission: isPDG || isComptable },
         { id: 'separator-clients-1', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
         { id: 'contrats-clients', text: 'Contrats Clients', icon: FileSignature, path: '/contrats-clients', permission: isPDG || isComptable, badge: contratsExpirant },
-        { id: 'nouveau-contrat-client', text: 'Nouveau Contrat', icon: FilePlus, path: '/contrats-clients/nouveau', permission: isPDG || isComptable },
+        { id: 'nouveau-contrat-client', text: 'Nouveau Contrat', icon: FilePlus, path: '/contrats-clients/ajouter', permission: isPDG || isComptable },
         { id: 'contrats-expirant-clients', text: 'Contrats Expirants', icon: CalendarClock, path: '/contrats-clients/expirant', permission: isPDG || isComptable, badge: contratsExpirant },
         { id: 'separator-clients-2', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
         { id: 'devis', text: 'Devis', icon: FileText, path: '/devis', permission: isPDG || isComptable },
-        { id: 'nouveau-devis', text: 'Nouveau Devis', icon: FilePlus, path: '/devis/nouveau', permission: isPDG || isComptable },
+        { id: 'nouveau-devis', text: 'Nouveau Devis', icon: FilePlus, path: '/devis/ajouter', permission: isPDG || isComptable },
         { id: 'factures', text: 'Factures', icon: Receipt, path: '/factures', permission: isPDG || isComptable, badge: facturesImpayees },
-        { id: 'nouvelle-facture', text: 'Nouvelle Facture', icon: PlusCircle, path: '/factures/nouvelle', permission: isPDG || isComptable },
+        { id: 'nouvelle-facture', text: 'Nouvelle Facture', icon: PlusCircle, path: '/factures/ajouter', permission: isPDG || isComptable },
         { id: 'factures-proforma', text: 'Factures Pro-forma', icon: FileClock, path: '/factures-proforma', permission: isPDG || isComptable },
         { id: 'avoirs', text: 'Avoirs', icon: FileMinus, path: '/avoirs', permission: isPDG || isComptable }
       ]
@@ -404,16 +426,16 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       items: [
         { id: 'dashboard-tresorerie', text: 'Tableau de Bord Trésorerie', icon: Gauge, path: '/dashboard-tresorerie', permission: isPDG || isComptable },
         { id: 'caisses', text: 'Caisses', icon: Banknote, path: '/caisses', permission: isPDG || isComptable },
-        { id: 'nouvelle-caisse', text: 'Nouvelle Caisse', icon: PlusCircle, path: '/caisses/nouvelle', permission: isPDG },
+        { id: 'nouvelle-caisse', text: 'Nouvelle Caisse', icon: PlusCircle, path: '/caisses/ajouter', permission: isPDG },
         { id: 'etat-caisse', text: 'État de Caisse', icon: ClipboardList, path: '/etat-caisse', permission: isPDG || isComptable },
         { id: 'comptes-bancaires', text: 'Comptes Bancaires', icon: Landmark, path: '/comptes-bancaires', permission: isPDG || isComptable },
-        { id: 'nouveau-compte-bancaire', text: 'Nouveau Compte', icon: PlusCircle, path: '/comptes-bancaires/nouveau', permission: isPDG },
+        { id: 'nouveau-compte-bancaire', text: 'Nouveau Compte', icon: PlusCircle, path: '/comptes-bancaires/ajouter', permission: isPDG },
         { id: 'mobile-money', text: 'Mobile Money', icon: Smartphone, path: '/mobile-money', permission: isPDG || isComptable },
         { id: 'separator-tresorerie-1', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
         { id: 'encaissements', text: 'Encaissements', icon: ArrowDownRight, path: '/encaissements', permission: isPDG || isComptable },
-        { id: 'nouvel-encaissement', text: 'Nouvel Encaissement', icon: PlusCircle, path: '/encaissements/nouveau', permission: isPDG || isComptable },
+        { id: 'nouvel-encaissement', text: 'Nouvel Encaissement', icon: PlusCircle, path: '/encaissements/ajouter', permission: isPDG || isComptable },
         { id: 'decaissements', text: 'Décaissements', icon: ArrowUpRight, path: '/decaissements', permission: isPDG || isComptable, badge: depensesEnAttente },
-        { id: 'nouveau-decaissement', text: 'Nouveau Décaissement', icon: PlusCircle, path: '/decaissements/nouveau', permission: isPDG || isComptable },
+        { id: 'nouveau-decaissement', text: 'Nouveau Décaissement', icon: PlusCircle, path: '/decaissements/ajouter', permission: isPDG || isComptable },
         { id: 'mouvements-tresorerie', text: 'Mouvements Trésorerie', icon: Coins, path: '/mouvements-tresorerie', permission: isPDG || isComptable },
         { id: 'separator-tresorerie-2', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
         { id: 'previsions', text: 'Prévisions', icon: CalendarDays, path: '/previsions', permission: isPDG || isComptable },
@@ -448,11 +470,11 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       items: [
         { id: 'dashboard-stocks', text: 'Tableau de Bord Stocks', icon: Gauge, path: '/dashboard-stocks', permission: isPDG || isLogistique },
         { id: 'articles', text: 'Articles', icon: Package, path: '/articles', permission: isPDG || isLogistique },
-        { id: 'nouvel-article', text: 'Nouvel Article', icon: PlusCircle, path: '/articles/nouveau', permission: isPDG || isLogistique },
+        { id: 'nouvel-article', text: 'Nouvel Article', icon: PlusCircle, path: '/articles/ajouter', permission: isPDG || isLogistique },
         { id: 'categories-articles', text: 'Catégories', icon: Tags, path: '/categories-articles', permission: isPDG || isLogistique },
         { id: 'separator-stocks-1', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'magasins', text: 'Magasins', icon: Warehouse, path: '/magasins', permission: isPDG || isLogistique },
-        { id: 'nouveau-magasin', text: 'Nouveau Magasin', icon: PlusCircle, path: '/magasins/nouveau', permission: isPDG },
+        { id: 'nouveau-magasin', text: 'Nouveau Magasin', icon: PlusCircle, path: '/magasins/ajouter', permission: isPDG },
         { id: 'stock-critique', text: 'Stock Critique', icon: AlertTriangle, path: '/stock-critique', permission: isPDG || isLogistique, badge: stockCritique },
         { id: 'separator-stocks-2', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'mouvements-stock', text: 'Mouvements de Stock', icon: ArrowLeftRight, path: '/mouvements-stock', permission: isPDG || isLogistique },
@@ -470,9 +492,9 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       icon: Truck,
       items: [
         { id: 'tricycles', text: 'Tricycles', icon: Truck, path: '/tricycles', permission: isPDG || isLogistique },
-        { id: 'nouveau-tricycle', text: 'Nouveau Tricycle', icon: PlusCircle, path: '/tricycles/nouveau', permission: isPDG || isLogistique },
+        { id: 'nouveau-tricycle', text: 'Nouveau Tricycle', icon: PlusCircle, path: '/tricycles/ajouter', permission: isPDG || isLogistique },
         { id: 'vehicules', text: 'Véhicules', icon: Truck, path: '/vehicules', permission: isPDG || isLogistique },
-        { id: 'nouveau-vehicule', text: 'Nouveau Véhicule', icon: PlusCircle, path: '/vehicules/nouveau', permission: isPDG || isLogistique },
+        { id: 'nouveau-vehicule', text: 'Nouveau Véhicule', icon: PlusCircle, path: '/vehicules/ajouter', permission: isPDG || isLogistique },
         { id: 'separator-tricycles-1', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'conducteurs', text: 'Conducteurs', icon: UserCheck, path: '/conducteurs', permission: isPDG || isLogistique },
         { id: 'affectations-vehicules', text: 'Affectations', icon: UserCheck, path: '/affectations-vehicules', permission: isPDG || isLogistique },
@@ -488,12 +510,12 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       icon: Droplet,
       items: [
         { id: 'carburant', text: 'Carburant', icon: Droplet, path: '/carburant', permission: isPDG || isLogistique, badge: carburantAlerte },
-        { id: 'nouveau-carburant', text: 'Nouveau Plein', icon: PlusCircle, path: '/carburant/nouveau', permission: isPDG || isLogistique },
+        { id: 'nouveau-carburant', text: 'Nouveau Plein', icon: PlusCircle, path: '/carburant/ajouter', permission: isPDG || isLogistique },
         { id: 'suivi-carburant', text: 'Suivi Consommation', icon: TrendingUp, path: '/suivi-carburant', permission: isPDG || isLogistique },
         { id: 'alertes-carburant', text: 'Alertes Carburant', icon: AlertTriangle, path: '/alertes-carburant', permission: isPDG || isLogistique, badge: carburantAlerte },
         { id: 'separator-carburant-1', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'maintenance', text: 'Maintenance', icon: Cog, path: '/maintenance', permission: isPDG || isLogistique, badge: tricyclesEnMaintenance },
-        { id: 'nouvelle-maintenance', text: 'Nouvelle Intervention', icon: PlusCircle, path: '/maintenance/nouvelle', permission: isPDG || isLogistique },
+        { id: 'nouvelle-maintenance', text: 'Nouvelle Intervention', icon: PlusCircle, path: '/maintenance/ajouter', permission: isPDG || isLogistique },
         { id: 'planning-maintenance', text: 'Planning Maintenance', icon: CalendarClock, path: '/planning-maintenance', permission: isPDG || isLogistique },
         { id: 'historique-maintenance', text: 'Historique Maintenance', icon: History, path: '/historique-maintenance', permission: isPDG || isLogistique },
         { id: 'separator-carburant-2', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
@@ -506,12 +528,12 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       icon: HardHat,
       items: [
         { id: 'missions', text: 'Missions', icon: Target, path: '/missions', permission: isPDG || isSuperviseur, badge: missionsEnCours },
-        { id: 'nouvelle-mission', text: 'Nouvelle Mission', icon: PlusCircle, path: '/missions/nouvelle', permission: isPDG || isSuperviseur },
+        { id: 'nouvelle-mission', text: 'Nouvelle Mission', icon: PlusCircle, path: '/missions/ajouter', permission: isPDG || isSuperviseur },
         { id: 'missions-en-cours', text: 'Missions en Cours', icon: Timer, path: '/missions/en-cours', permission: isPDG || isSuperviseur, badge: missionsEnCours },
         { id: 'historique-missions', text: 'Historique Missions', icon: History, path: '/historique-missions', permission: isPDG || isSuperviseur },
         { id: 'separator-exploitation-1', text: '', icon: null, path: '#', permission: isPDG || isSuperviseur, separator: true },
         { id: 'equipes', text: 'Équipes', icon: Users, path: '/equipes', permission: isPDG || isSuperviseur },
-        { id: 'nouvelle-equipe', text: 'Nouvelle Équipe', icon: PlusCircle, path: '/equipes/nouvelle', permission: isPDG || isSuperviseur },
+        { id: 'nouvelle-equipe', text: 'Nouvelle Équipe', icon: PlusCircle, path: '/equipes/ajouter', permission: isPDG || isSuperviseur },
         { id: 'presences-terrain', text: 'Présences Terrain', icon: ClipboardCheck, path: '/presences-terrain', permission: isPDG || isSuperviseur },
         { id: 'pointage-terrain', text: 'Pointage Terrain', icon: Fingerprint, path: '/pointage-terrain', permission: isPDG || isSuperviseur },
         { id: 'separator-exploitation-2', text: '', icon: null, path: '#', permission: isPDG || isSuperviseur, separator: true },
@@ -525,16 +547,16 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       icon: Briefcase,
       items: [
         { id: 'fournisseurs', text: 'Fournisseurs', icon: Building2, path: '/fournisseurs', permission: isPDG || isLogistique },
-        { id: 'nouveau-fournisseur', text: 'Nouveau Fournisseur', icon: PlusCircle, path: '/fournisseurs/nouveau', permission: isPDG || isLogistique },
+        { id: 'nouveau-fournisseur', text: 'Nouveau Fournisseur', icon: PlusCircle, path: '/fournisseurs/ajouter', permission: isPDG || isLogistique },
         { id: 'evaluations-fournisseurs', text: 'Évaluations', icon: Star, path: '/evaluations-fournisseurs', permission: isPDG || isLogistique },
         { id: 'separator-achats-1', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'demandes-achat', text: "Demandes d'Achat", icon: FilePlus, path: '/demandes-achat', permission: isPDG || isLogistique },
-        { id: 'nouvelle-demande-achat', text: 'Nouvelle Demande', icon: PlusCircle, path: '/demandes-achat/nouvelle', permission: isPDG || isLogistique },
+        { id: 'nouvelle-demande-achat', text: 'Nouvelle Demande', icon: PlusCircle, path: '/demandes-achat/ajouter', permission: isPDG || isLogistique },
         { id: 'validation-demandes', text: 'Validation Demandes', icon: CheckSquare, path: '/validation-demandes', permission: isPDG },
         { id: 'separator-achats-2', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'devis-fournisseurs', text: 'Devis Fournisseurs', icon: FileText, path: '/devis-fournisseurs', permission: isPDG || isLogistique },
         { id: 'bons-commande', text: 'Bons de Commande', icon: ClipboardList, path: '/bons-commande', permission: isPDG || isLogistique },
-        { id: 'nouveau-bon-commande', text: 'Nouveau Bon de Commande', icon: PlusCircle, path: '/bons-commande/nouveau', permission: isPDG || isLogistique },
+        { id: 'nouveau-bon-commande', text: 'Nouveau Bon de Commande', icon: PlusCircle, path: '/bons-commande/ajouter', permission: isPDG || isLogistique },
         { id: 'separator-achats-3', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'receptions', text: 'Réceptions', icon: Package, path: '/receptions', permission: isPDG || isLogistique },
         { id: 'factures-fournisseurs', text: 'Factures Fournisseurs', icon: Receipt, path: '/factures-fournisseurs', permission: isPDG || isComptable },
@@ -913,7 +935,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                             <p className="font-semibold">{userFullName || userName}</p>
                             <p className="text-xs text-primary-content/70 truncate">{userEmail}</p>
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {/* ✅ BADGE RÔLE — Bleu Cyan pour PDG/Admin */}
                               <span className={`badge badge-${roleConfig.color} badge-sm`}>
                                 {roleConfig.label}
                               </span>
@@ -1005,7 +1026,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
                   <p className="font-semibold text-sm truncate text-base-content">{userFullName || userName}</p>
                   <p className="text-xs text-base-content/50 truncate">{userEmail}</p>
                   <div className="flex items-center gap-1 mt-1 flex-wrap">
-                    {/* ✅ BADGE RÔLE SIDEBAR — Bleu Cyan pour PDG/Admin */}
                     <span className={`badge badge-${roleConfig.color} badge-sm`}>
                       <RoleIcon className="w-3 h-3 mr-1" />
                       {roleConfig.label}
