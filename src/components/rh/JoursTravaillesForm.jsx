@@ -1,5 +1,5 @@
 // pages/jours-travailles/JoursTravaillesForm.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, CalendarDays, Save, Edit, Loader2, AlertCircle,
@@ -19,8 +19,6 @@ const JoursTravaillesForm = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
-  const estEdition = id && id !== 'ajouter' && id !== 'creer';
 
   const [chargement, setChargement] = useState(false);
   const [chargementInitial, setChargementInitial] = useState(true);
@@ -42,181 +40,27 @@ const JoursTravaillesForm = () => {
   // Données
   const [employes, setEmployes] = useState([]);
   const [departements, setDepartements] = useState([]);
-  const [joursExistants, setJoursExistants] = useState({}); // { employeId: jourData }
+  const [joursExistants, setJoursExistants] = useState({});
 
-  // Formulaire : Map employeId → données de saisie
+  // Formulaire
   const [saisie, setSaisie] = useState({});
-  const [modeEdition, setModeEdition] = useState('tableau'); // 'tableau' | 'cartes'
 
   // ============================================
-  // CHARGEMENT INITIAL
-  // ============================================
-  useEffect(() => {
-    chargerDonneesReference();
-  }, []);
-
-  useEffect(() => {
-    if (!chargementInitial) {
-      chargerJoursExistants();
-    }
-  }, [mois, annee]);
-
-  const chargerDonneesReference = async () => {
-    try {
-      const [empRes, depRes] = await Promise.all([
-        AxiosInstance.get('/employes/').catch(() => ({ data: [] })),
-        AxiosInstance.get('/departements/').catch(() => ({ data: [] })),
-      ]);
-
-      const empData = empRes.data.results || empRes.data || [];
-      const depData = depRes.data.results || depRes.data || [];
-
-      setEmployes(empData.filter(e => e.statut === 'actif'));
-      setDepartements(depData);
-      setChargementInitial(false);
-    } catch (err) {
-      console.error('Erreur:', err);
-      setErreur('Impossible de charger les données de référence');
-      setChargementInitial(false);
-    }
-  };
-
-  const chargerJoursExistants = async () => {
-    setChargement(true);
-    try {
-      const res = await AxiosInstance.get(
-        `/jours-travailles/?mois=${mois}&annee=${annee}`
-      );
-      const data = res.data.results || res.data || [];
-
-      // Indexer par employe
-      const map = {};
-      data.forEach(j => {
-        map[String(j.employe)] = j;
-      });
-      setJoursExistants(map);
-
-      // Initialiser le formulaire
-      initialiserSaisie(map);
-    } catch (err) {
-      console.error('Erreur:', err);
-      // Si erreur 404, initialiser vide
-      setJoursExistants({});
-      initialiserSaisie({});
-    } finally {
-      setChargement(false);
-    }
-  };
-
-  // ============================================
-  // CALCUL DU NOMBRE DE JOURS OUVRÉS DU MOIS
+  // ✅ DÉCLARATION 1 : jours ouvrés du mois (useMemo)
   // ============================================
   const joursTheoriquesMois = useMemo(() => {
-    const debut = new Date(annee, mois - 1, 1);
     const fin = new Date(annee, mois, 0);
     let jours = 0;
     for (let d = 1; d <= fin.getDate(); d++) {
       const jour = new Date(annee, mois - 1, d);
       const dayOfWeek = jour.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) jours++; // Lundi-Vendredi
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) jours++;
     }
     return jours;
   }, [mois, annee]);
 
   // ============================================
-  // INITIALISATION SAISIE
-  // ============================================
-  const initialiserSaisie = (existants) => {
-    const nouvelle = {};
-
-    employes.forEach(emp => {
-      const existant = existants[String(emp.id)];
-
-      if (existant) {
-        nouvelle[emp.id] = {
-          employe: emp.id,
-          jours_theoriques: existant.jours_theoriques || joursTheoriquesMois,
-          jours_presents: existant.jours_presents || 0,
-          absences_non_justifiees: existant.absences_non_justifiees || 0,
-          jours_travailles: existant.jours_travailles || 0,
-          commentaire: existant.commentaire || '',
-          dejaEnregistre: true,
-          id: existant.id,
-        };
-      } else {
-        nouvelle[emp.id] = {
-          employe: emp.id,
-          jours_theoriques: joursTheoriquesMois,
-          jours_presents: joursTheoriquesMois,
-          absences_non_justifiees: 0,
-          jours_travailles: joursTheoriquesMois,
-          commentaire: '',
-          dejaEnregistre: false,
-          id: null,
-        };
-      }
-    });
-
-    setSaisie(nouvelle);
-  };
-
-  // Recalcul auto quand changement de mois/année
-  useEffect(() => {
-    if (Object.keys(joursExistants).length > 0 || employes.length > 0) {
-      initialiserSaisie(joursExistants);
-    }
-  }, [joursTheoriquesMois, employes, joursExistants]);
-
-  // ============================================
-  // HANDLERS DE MODIFICATION
-  // ============================================
-  const handleChange = (employeId, field, value) => {
-    setSaisie(prev => {
-      const updated = {
-        ...prev,
-        [employeId]: {
-          ...prev[employeId],
-          [field]: value,
-        },
-      };
-
-      // Recalcul automatique des jours travaillés
-      const emp = updated[employeId];
-      const presents = Number(emp.jours_presents) || 0;
-      const absences = Number(emp.absences_non_justifiees) || 0;
-      updated[employeId].jours_travailles = Math.max(0, presents - absences);
-
-      return updated;
-    });
-  };
-
-  const appliquerATous = (field, value) => {
-    if (!confirm(`Appliquer la valeur ${value} à tous les employés filtrés ?`)) return;
-
-    setSaisie(prev => {
-      const updated = { ...prev };
-      employesFiltres.forEach(emp => {
-        if (updated[emp.id]) {
-          updated[emp.id] = { ...updated[emp.id], [field]: value };
-
-          // Recalcul
-          const e = updated[emp.id];
-          const presents = Number(e.jours_presents) || 0;
-          const absences = Number(e.absences_non_justifiees) || 0;
-          e.jours_travailles = Math.max(0, presents - absences);
-        }
-      });
-      return updated;
-    });
-  };
-
-  const reinitialiser = () => {
-    if (!confirm('Réinitialiser tous les jours présents à ' + joursTheoriquesMois + ' jours ?')) return;
-    initialiserSaisie(joursExistants);
-  };
-
-  // ============================================
-  // FILTRES
+  // ✅ DÉCLARATION 2 : employés filtrés (useMemo)
   // ============================================
   const employesFiltres = useMemo(() => {
     return employes.filter(emp => {
@@ -236,7 +80,41 @@ const JoursTravaillesForm = () => {
   }, [employes, recherche, filtreDepartement]);
 
   // ============================================
-  // STATISTIQUES DE SAISIE
+  // ✅ DÉCLARATION 3 : initialiserSaisie (useCallback)
+  // ============================================
+  const initialiserSaisie = useCallback((existants = {}, emps = [], theoriques = 0) => {
+    const nouvelle = {};
+    emps.forEach(emp => {
+      const existant = existants[String(emp.id)];
+      if (existant) {
+        nouvelle[emp.id] = {
+          employe: emp.id,
+          jours_theoriques: existant.jours_theoriques ?? theoriques,
+          jours_presents: existant.jours_presents ?? 0,
+          absences_non_justifiees: existant.absences_non_justifiees ?? 0,
+          jours_travailles: existant.jours_travailles ?? 0,
+          commentaire: existant.commentaire || '',
+          dejaEnregistre: true,
+          id: existant.id,
+        };
+      } else {
+        nouvelle[emp.id] = {
+          employe: emp.id,
+          jours_theoriques: theoriques,
+          jours_presents: theoriques,
+          absences_non_justifiees: 0,
+          jours_travailles: theoriques,
+          commentaire: '',
+          dejaEnregistre: false,
+          id: null,
+        };
+      }
+    });
+    return nouvelle;
+  }, []);
+
+  // ============================================
+  // ✅ DÉCLARATION 4 : statistiques de saisie (useMemo)
   // ============================================
   const statsSaisie = useMemo(() => {
     let totalTheoriques = 0;
@@ -275,6 +153,122 @@ const JoursTravaillesForm = () => {
   }, [saisie, employesFiltres]);
 
   // ============================================
+  // EFFET 1 : charger données de référence
+  // ============================================
+  useEffect(() => {
+    const chargerReference = async () => {
+      try {
+        const [empRes, depRes] = await Promise.all([
+          AxiosInstance.get('/employes/').catch(() => ({ data: [] })),
+          AxiosInstance.get('/departements/').catch(() => ({ data: [] })),
+        ]);
+
+        const empData = empRes.data.results || empRes.data || [];
+        const depData = depRes.data.results || depRes.data || [];
+
+        setEmployes(empData.filter(e => e.statut === 'actif'));
+        setDepartements(depData);
+      } catch (err) {
+        console.error('Erreur:', err);
+        setErreur('Impossible de charger les données de référence');
+      } finally {
+        setChargementInitial(false);
+      }
+    };
+    chargerReference();
+  }, []);
+
+  // ============================================
+  // EFFET 2 : charger jours existants quand mois/année change
+  // ============================================
+  useEffect(() => {
+    if (chargementInitial) return;
+
+    const chargerJours = async () => {
+      setChargement(true);
+      try {
+        const res = await AxiosInstance.get(
+          `/jours-travailles/?mois=${mois}&annee=${annee}`
+        );
+        const data = res.data.results || res.data || [];
+
+        const map = {};
+        data.forEach(j => {
+          map[String(j.employe)] = j;
+        });
+        setJoursExistants(map);
+      } catch (err) {
+        console.error('Erreur:', err);
+        setJoursExistants({});
+      } finally {
+        setChargement(false);
+      }
+    };
+    chargerJours();
+  }, [mois, annee, chargementInitial]);
+
+  // ============================================
+  // EFFET 3 : initialiser la saisie quand les données sont prêtes
+  // ============================================
+  useEffect(() => {
+    if (employes.length > 0) {
+      const nouvelleSaisie = initialiserSaisie(
+        joursExistants,
+        employes,
+        joursTheoriquesMois
+      );
+      setSaisie(nouvelleSaisie);
+    }
+  }, [employes, joursExistants, joursTheoriquesMois, initialiserSaisie]);
+
+  // ============================================
+  // HANDLERS
+  // ============================================
+  const handleChange = (employeId, field, value) => {
+    setSaisie(prev => {
+      const updated = {
+        ...prev,
+        [employeId]: {
+          ...prev[employeId],
+          [field]: value,
+        },
+      };
+
+      const emp = updated[employeId];
+      const presents = Number(emp.jours_presents) || 0;
+      const absences = Number(emp.absences_non_justifiees) || 0;
+      updated[employeId].jours_travailles = Math.max(0, presents - absences);
+
+      return updated;
+    });
+  };
+
+  const appliquerATous = (field, value) => {
+    if (!confirm(`Appliquer la valeur ${value} à ${employesFiltres.length} employé(s) filtré(s) ?`)) return;
+
+    setSaisie(prev => {
+      const updated = { ...prev };
+      employesFiltres.forEach(emp => {
+        if (updated[emp.id]) {
+          updated[emp.id] = { ...updated[emp.id], [field]: value };
+
+          const e = updated[emp.id];
+          const presents = Number(e.jours_presents) || 0;
+          const absences = Number(e.absences_non_justifiees) || 0;
+          e.jours_travailles = Math.max(0, presents - absences);
+        }
+      });
+      return updated;
+    });
+  };
+
+  const reinitialiser = () => {
+    if (!confirm(`Réinitialiser avec ${joursTheoriquesMois} jours ouvrés pour tous ?`)) return;
+    const nouvelleSaisie = initialiserSaisie(joursExistants, employes, joursTheoriquesMois);
+    setSaisie(nouvelleSaisie);
+  };
+
+  // ============================================
   // SOUMISSION
   // ============================================
   const handleSubmit = async (e) => {
@@ -290,7 +284,6 @@ const JoursTravaillesForm = () => {
         return;
       }
 
-      // Préparer les requêtes
       const aCreer = [];
       const aMettreAJour = [];
 
@@ -316,7 +309,6 @@ const JoursTravaillesForm = () => {
         }
       });
 
-      // Envoyer en parallèle
       const promises = [
         ...aCreer.map(p => AxiosInstance.post('/jours-travailles/', p)),
         ...aMettreAJour.map(({ id, payload }) =>
@@ -328,24 +320,15 @@ const JoursTravaillesForm = () => {
       const echecs = resultats.filter(r => r.status === 'rejected');
 
       if (echecs.length > 0) {
-        setErreur(
-          `${echecs.length} enregistrement(s) ont échoué. Vérifiez les données.`
-        );
+        setErreur(`${echecs.length} enregistrement(s) ont échoué.`);
       } else {
-        setMessageSucces(
-          `${aCreer.length} créé(s) • ${aMettreAJour.length} mis à jour`
-        );
+        setMessageSucces(`${aCreer.length} créé(s) • ${aMettreAJour.length} mis à jour`);
         setSucces(true);
-
-        setTimeout(() => {
-          navigate('/jours-travailles');
-        }, 1500);
+        setTimeout(() => navigate('/jours-travailles'), 1500);
       }
     } catch (err) {
       console.error('Erreur:', err);
-      setErreur(
-        err.response?.data?.error || "Erreur lors de l'enregistrement"
-      );
+      setErreur(err.response?.data?.error || "Erreur lors de l'enregistrement");
     } finally {
       setChargement(false);
     }
@@ -365,12 +348,11 @@ const JoursTravaillesForm = () => {
   return (
     <div className="w-full min-h-screen bg-base-200/40 pb-32">
 
-      {/* ============================================ */}
-      {/* EN-TÊTE STICKY                                */}
-      {/* ============================================ */}
+      {/* EN-TÊTE STICKY */}
       <div className="w-full sticky top-0 z-20 bg-base-100 border-b border-base-300 shadow-sm">
         <div className="flex items-center gap-4 px-6 py-3">
           <button
+            type="button"
             onClick={() => navigate('/jours-travailles')}
             className="btn btn-ghost btn-sm btn-circle"
             title="Retour"
@@ -383,9 +365,13 @@ const JoursTravaillesForm = () => {
               <Building2 className="w-3 h-3" />
               Ressources Humaines
               <span className="text-base-content/30">/</span>
-              <Link to="/jours-travailles" className="hover:text-primary">
+              <button
+                type="button"
+                onClick={() => navigate('/jours-travailles')}
+                className="hover:text-primary"
+              >
                 Jours Travaillés
-              </Link>
+              </button>
               <span className="text-base-content/30">/</span>
               <span className="text-primary">Saisie de masse</span>
             </div>
@@ -422,14 +408,11 @@ const JoursTravaillesForm = () => {
 
       <form onSubmit={handleSubmit}>
 
-        {/* ============================================ */}
-        {/* FILTRES PÉRIODE + DÉPARTEMENT                 */}
-        {/* ============================================ */}
+        {/* FILTRES PÉRIODE */}
         <div className="w-full p-6 pb-3">
           <div className="card bg-base-100 shadow-sm border border-base-300">
             <div className="card-body p-4 space-y-4">
 
-              {/* Période */}
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-2 text-sm font-medium text-base-content/70">
                   <Calendar className="w-4 h-4 text-primary" />
@@ -467,7 +450,6 @@ const JoursTravaillesForm = () => {
 
               <div className="divider my-0"></div>
 
-              {/* Filtres */}
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex-1 min-w-[200px]">
                   <div className="relative">
@@ -497,7 +479,6 @@ const JoursTravaillesForm = () => {
                   type="button"
                   onClick={reinitialiser}
                   className="btn btn-ghost btn-sm gap-2"
-                  title="Réinitialiser tous les jours présents"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Réinitialiser
@@ -508,9 +489,7 @@ const JoursTravaillesForm = () => {
           </div>
         </div>
 
-        {/* ============================================ */}
-        {/* STATISTIQUES RAPIDES                          */}
-        {/* ============================================ */}
+        {/* STATISTIQUES */}
         <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 px-6 pb-6">
           <div className="card bg-base-100 shadow-sm border border-base-300">
             <div className="card-body p-3 flex-row items-center gap-2">
@@ -572,9 +551,7 @@ const JoursTravaillesForm = () => {
           </div>
         </div>
 
-        {/* ============================================ */}
-        {/* ACTIONS RAPIDES DE MASSE                      */}
-        {/* ============================================ */}
+        {/* ACTIONS DE MASSE */}
         {employesFiltres.length > 0 && (
           <div className="w-full px-6 pb-6">
             <div className="card bg-info/5 border border-info/20 shadow-sm">
@@ -583,7 +560,7 @@ const JoursTravaillesForm = () => {
                   <Zap className="w-4 h-4 text-info" />
                   <h3 className="font-semibold text-sm text-info">Actions de masse</h3>
                   <span className="text-xs text-base-content/50 ml-auto">
-                    Applique à {employesFiltres.length} employé{employesFiltres.length > 1 ? 's' : ''} filtré{employesFiltres.length > 1 ? 's' : ''}
+                    Applique à {employesFiltres.length} employé{employesFiltres.length > 1 ? 's' : ''}
                   </span>
                 </div>
 
@@ -618,7 +595,7 @@ const JoursTravaillesForm = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!confirm('Marquer tous comme ayant 0 jour présent (absence totale) ?')) return;
+                      if (!confirm('Marquer tous comme 0 jour présent ?')) return;
                       appliquerATous('jours_presents', 0);
                     }}
                     className="btn btn-sm btn-outline btn-error gap-2"
@@ -632,9 +609,7 @@ const JoursTravaillesForm = () => {
           </div>
         )}
 
-        {/* ============================================ */}
-        {/* TABLEAU DE SAISIE                             */}
-        {/* ============================================ */}
+        {/* TABLEAU DE SAISIE */}
         <div className="w-full px-6">
           {employesFiltres.length === 0 ? (
             <div className="text-center py-12 bg-base-100 rounded-xl shadow-sm border border-base-300">
@@ -692,8 +667,6 @@ const JoursTravaillesForm = () => {
                     const presents = Number(s.jours_presents) || 0;
                     const absences = Number(s.absences_non_justifiees) || 0;
                     const theoriques = Number(s.jours_theoriques) || 0;
-
-                    // Validation : présents + absences ne doit pas dépasser théoriques
                     const surplus = (presents + absences) > theoriques;
 
                     return (
@@ -833,7 +806,7 @@ const JoursTravaillesForm = () => {
           )}
         </div>
 
-        {/* Aide */}
+        {/* AIDE */}
         <div className="w-full px-6 pt-4">
           <div className="p-3 rounded-lg bg-info/5 border border-info/20 flex items-start gap-2">
             <Info className="w-4 h-4 text-info flex-shrink-0 mt-0.5" />
@@ -842,7 +815,7 @@ const JoursTravaillesForm = () => {
               <ul className="list-disc list-inside space-y-0.5">
                 <li>Modifiez les valeurs directement dans le tableau — le calcul est automatique</li>
                 <li>Utilisez les <strong>actions de masse</strong> pour appliquer une valeur à tous les employés filtrés</li>
-                <li>Les lignes avec <AlertTriangle className="w-3 h-3 inline text-error" /> ont un total incohérent (Présents + Absences {'>'} Théoriques)</li>
+                <li>Les lignes avec <AlertTriangle className="w-3 h-3 inline text-error" /> ont un total incohérent</li>
                 <li>
                   <CheckCircle className="w-3 h-3 inline text-success" /> = mise à jour •{' '}
                   <Plus className="w-3 h-3 inline text-info" /> = nouvel enregistrement
@@ -852,9 +825,7 @@ const JoursTravaillesForm = () => {
           </div>
         </div>
 
-        {/* ============================================ */}
-        {/* BARRE D'ACTIONS STICKY                        */}
-        {/* ============================================ */}
+        {/* BARRE STICKY */}
         <div className="fixed bottom-0 left-0 right-0 z-30 bg-base-100 border-t border-base-300 shadow-lg lg:pl-72">
           <div className="flex items-center justify-between gap-4 px-6 py-3">
 
