@@ -292,7 +292,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       icon: Shield,
       items: [
         { id: 'utilisateurs', text: 'Utilisateurs', icon: Users, path: '/utilisateurs', permission: isPDG },
-        // ✅ CORRIGÉ : /utilisateurs/ajouter (au lieu de /utilisateurs/nouveau)
         { id: 'nouvel-utilisateur', text: 'Nouvel Utilisateur', icon: UserPlus, path: '/utilisateurs/ajouter', permission: isPDG },
         { id: 'roles', text: 'Rôles & Permissions', icon: Shield, path: '/roles', permission: isPDG },
         { id: 'separator-admin-1', text: '', icon: null, path: '#', permission: isPDG, separator: true },
@@ -312,6 +311,10 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       name: 'RESSOURCES HUMAINES',
       icon: Users,
       items: [
+        // ✅ NOUVEAU : Tableau de bord RH en premier
+        { id: 'dashboard-rh', text: 'Tableau de Bord RH', icon: Gauge, path: '/dashboard-rh', permission: isPDG || isRH },
+        { id: 'separator-rh-dash', text: '', icon: null, path: '#', permission: isPDG || isRH, separator: true },
+
         // ----- Départements & Postes -----
         { id: 'departements', text: 'Départements', icon: Building2, path: '/departements', permission: isPDG || isRH },
         { id: 'postes', text: 'Postes', icon: Briefcase, path: '/postes', permission: isPDG || isRH },

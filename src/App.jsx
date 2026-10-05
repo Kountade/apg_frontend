@@ -44,6 +44,14 @@ import CongeDetail from './components/rh/CongeDetail';
 import SoldeConges from './components/rh/SoldeConges';
 import JoursTravailles from './components/rh/JoursTravailles';
 import JoursTravaillesForm from './components/rh/JoursTravaillesForm';
+import Evaluations from './components/rh/Evaluations';
+import EvaluationForm from './components/rh/EvaluationForm';
+import EvaluationDetail from './components/rh/EvaluationDetail';
+import Formations from './components/rh/Formations';
+import FormationForm from './components/rh/FormationForm';
+import FormationDetail from './components/rh/FormationDetail';
+import MesConges from './components/rh/MesConges';
+import DashboardRH from './components/rh/DashboardRH';
 
 function App() {
   const location = useLocation();
@@ -122,6 +130,18 @@ function App() {
 <Route path="/soldes-conges" element={<SoldeConges />} />
 <Route path="/jours-travailles" element={<JoursTravailles />} />
 <Route path="/jours-travailles/ajouter" element={<JoursTravaillesForm />} />
+
+<Route path="/evaluations" element={<Evaluations />} />
+<Route path="/evaluations/ajouter" element={<EvaluationForm />} />
+<Route path="/evaluations/:id" element={<EvaluationDetail />} />
+<Route path="/evaluations/:id/modifier" element={<EvaluationForm />} />
+
+<Route path="/formations" element={<Formations />} />
+<Route path="/formations/ajouter" element={<FormationForm />} />
+<Route path="/formations/:id" element={<FormationDetail />} />
+<Route path="/formations/:id/modifier" element={<FormationForm />} />
+<Route path="/conges/mes_conges" element={<MesConges />} />
+<Route path="/dashboard-rh" element={<DashboardRH />} />
 
                 <Route path="/utilisateurs" element={<Utilisateurs />} />
                 <Route path="/utilisateurs/ajouter" element={<UtilisateurForm />} />
