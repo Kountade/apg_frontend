@@ -60,6 +60,9 @@ import ClientsEntreprises from './components/clients/ClientsEntreprises';
 import ClientsAdministrations from './components/clients/ClientsAdministrations';
 import ClientsOng from './components/clients/ClientsOng';
 import ClientsCollectivites from './components/clients/ClientsCollectivites';
+import ContratClientDetail from './components/clients/ContratClientDetail';
+import ContratClientForm from './components/clients/ContratClientForm';
+import ContratsClients from './components/clients/ContratsClients';
 
 function App() {
   const location = useLocation();
@@ -101,6 +104,13 @@ function App() {
 <Route path="/clients-administrations" element={<ClientsAdministrations />} />
 <Route path="/clients-ong" element={<ClientsOng />} />
 <Route path="/clients-collectivites" element={<ClientsCollectivites />} />
+
+{/* Contrats clients */}
+<Route path="/contrats-clients" element={<ContratsClients />} />
+<Route path="/contrats-clients/ajouter" element={<ContratClientForm />} />
+<Route path="/contrats-clients/:id" element={<ContratClientDetail />} />
+<Route path="/contrats-clients/:id/modifier" element={<ContratClientForm />} />
+<Route path="/contrats-clients/expirant" element={<ContratsClients />} />
 
 
 //  RESSOURCES HUMAINES 
