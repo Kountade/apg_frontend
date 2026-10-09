@@ -52,6 +52,14 @@ import FormationForm from './components/rh/FormationForm';
 import FormationDetail from './components/rh/FormationDetail';
 import MesConges from './components/rh/MesConges';
 import DashboardRH from './components/rh/DashboardRH';
+import Clients from './components/clients/Clients';
+import ClientForm from './components/clients/ClientForm';
+import ClientDetail from './components/clients/ClientDetail';
+import ClientsParticuliers from './components/clients/ClientsParticuliers';
+import ClientsEntreprises from './components/clients/ClientsEntreprises';
+import ClientsAdministrations from './components/clients/ClientsAdministrations';
+import ClientsOng from './components/clients/ClientsOng';
+import ClientsCollectivites from './components/clients/ClientsCollectivites';
 
 function App() {
   const location = useLocation();
@@ -80,7 +88,19 @@ function App() {
               <Route element={<ProtectedRoute />}>
              
 
-               
+
+
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/clients/ajouter" element={<ClientForm />} />
+                <Route path="/clients/:id" element={<ClientDetail />} />
+                <Route path="/clients/:id/modifier" element={<ClientForm />} />
+
+               {/* Clients filtrés par type */}
+<Route path="/clients-particuliers" element={<ClientsParticuliers />} />
+<Route path="/clients-entreprises" element={<ClientsEntreprises />} />
+<Route path="/clients-administrations" element={<ClientsAdministrations />} />
+<Route path="/clients-ong" element={<ClientsOng />} />
+<Route path="/clients-collectivites" element={<ClientsCollectivites />} />
 
 
 //  RESSOURCES HUMAINES 
