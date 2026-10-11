@@ -87,6 +87,14 @@ import EcritureDetail from './components/comptabilite/EcritureDetail';
 import DeclarationsFiscales from './components/comptabilite/DeclarationsFiscales';
 import DeclarationForm from './components/comptabilite/DeclarationForm';
 import DeclarationDetail from './components/comptabilite/DeclarationDetail';
+import Caisses from './components/tresorerie/Caisses';
+import CaisseForm from './components/tresorerie/CaisseForm';
+import CaisseDetail from './components/tresorerie/CaisseDetail';
+import EtatCaisse from './components/tresorerie/EtatCaisse';
+import ComptesBancaires from './components/tresorerie/ComptesBancaires';
+import CompteBancaireForm from './components/tresorerie/CompteBancaireForm';
+import CompteBancaireDetail from './components/tresorerie/CompteBancaireDetail';
+
 
 function App() {
   const location = useLocation();
@@ -144,6 +152,23 @@ function App() {
 
 
 
+
+{/* ============================================ */}
+{/* TRÉSORERIE - COMPTES BANCAIRES */}
+{/* ============================================ */}
+<Route path="/comptes-bancaires" element={<ComptesBancaires />} />
+<Route path="/comptes-bancaires/ajouter" element={<CompteBancaireForm />} />
+<Route path="/comptes-bancaires/:id" element={<CompteBancaireDetail />} />
+<Route path="/comptes-bancaires/:id/modifier" element={<CompteBancaireForm />} />
+
+{/* ============================================ */}
+{/* TRÉSORERIE - CAISSES */}
+{/* ============================================ */}
+<Route path="/caisses" element={<Caisses />} />
+<Route path="/caisses/ajouter" element={<CaisseForm />} />
+<Route path="/caisses/:id" element={<CaisseDetail />} />
+<Route path="/caisses/:id/modifier" element={<CaisseForm />} />
+<Route path="/etat-caisse" element={<EtatCaisse />} />
 
 {/* ============================================ */}
 {/* COMPTABILITÉ - PLAN COMPTABLE */}
