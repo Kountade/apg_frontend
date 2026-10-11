@@ -73,8 +73,20 @@ import PrestationForm from './components/clients/PrestationForm';
 // Comptabilité - Plan comptable
 import ComptesComptables from './components/comptabilite/ComptesComptables';
 import CompteComptableForm from './components/comptabilite/CompteComptableForm';
-
-
+import JournalForm from './components/comptabilite/JournalForm';
+import Journaux from './components/comptabilite/Journaux';
+import Factures from './components/comptabilite/Factures';
+import FactureForm from './components/comptabilite/FactureForm';
+import FactureDetail from './components/comptabilite/FactureDetail';
+import Devis from './components/comptabilite/Devis';
+import DevisForm from './components/comptabilite/DevisForm';
+import DevisDetail from './components/comptabilite/DevisDetail';
+import EcrituresComptables from './components/comptabilite/EcrituresComptables';
+import EcritureForm from './components/comptabilite/EcritureForm';
+import EcritureDetail from './components/comptabilite/EcritureDetail';
+import DeclarationsFiscales from './components/comptabilite/DeclarationsFiscales';
+import DeclarationForm from './components/comptabilite/DeclarationForm';
+import DeclarationDetail from './components/comptabilite/DeclarationDetail';
 
 function App() {
   const location = useLocation();
@@ -139,7 +151,43 @@ function App() {
 <Route path="/plan-comptable" element={<ComptesComptables />} />
 <Route path="/plan-comptable/ajouter" element={<CompteComptableForm />} />
 <Route path="/plan-comptable/:id/modifier" element={<CompteComptableForm />} />
+{/* ============================================ */}
+{/* COMPTABILITÉ - JOURNAUX */}
+{/* ============================================ */}
+<Route path="/journaux" element={<Journaux />} />
+<Route path="/journaux/ajouter" element={<JournalForm />} />
+<Route path="/journaux/:id/modifier" element={<JournalForm />} />
 
+
+{/* COMPTABILITÉ - FACTURES */}
+{/* ============================================ */}
+<Route path="/factures" element={<Factures />} />
+<Route path="/factures/ajouter" element={<FactureForm />} />
+<Route path="/factures/:id/modifier" element={<FactureForm />} />
+<Route path="/factures/:id" element={<FactureDetail />} />
+
+{/* ============================================ */}
+{/* COMPTABILITÉ - DEVIS */}
+{/* ============================================ */}
+<Route path="/devis" element={<Devis />} />
+<Route path="/devis/ajouter" element={<DevisForm />} />
+<Route path="/devis/:id" element={<DevisDetail />} />
+<Route path="/devis/:id/modifier" element={<DevisForm />} />
+
+{/* ============================================ */}
+{/* COMPTABILITÉ - ÉCRITURES COMPTABLES */}
+{/* ============================================ */}
+<Route path="/ecritures-comptables" element={<EcrituresComptables />} />
+<Route path="/ecritures-comptables/ajouter" element={<EcritureForm />} />
+<Route path="/ecritures-comptables/:id" element={<EcritureDetail />} />
+<Route path="/ecritures-comptables/:id/modifier" element={<EcritureForm />} />
+
+{/* ============================================ */}
+{/* COMPTABILITÉ - DÉCLARATIONS FISCALES */}
+<Route path="/declarations-fiscales" element={<DeclarationsFiscales />} />
+<Route path="/declarations-fiscales/ajouter" element={<DeclarationForm />} />
+<Route path="/declarations-fiscales/:id" element={<DeclarationDetail />} />
+<Route path="/declarations-fiscales/:id/modifier" element={<DeclarationForm />} />
 
 //  RESSOURCES HUMAINES 
 <Route path="/departements" element={<Departements />} />
