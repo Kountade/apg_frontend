@@ -60,9 +60,21 @@ import ClientsEntreprises from './components/clients/ClientsEntreprises';
 import ClientsAdministrations from './components/clients/ClientsAdministrations';
 import ClientsOng from './components/clients/ClientsOng';
 import ClientsCollectivites from './components/clients/ClientsCollectivites';
+import ClientsEcoles from './components/clients/ClientsEcoles';
+import ClientsCommerces from './components/clients/ClientsCommerces';
+import ClientsHotels from './components/clients/ClientsHotels';
+
 import ContratClientDetail from './components/clients/ContratClientDetail';
 import ContratClientForm from './components/clients/ContratClientForm';
 import ContratsClients from './components/clients/ContratsClients';
+import Prestations from './components/clients/Prestations';
+import PrestationForm from './components/clients/PrestationForm';
+
+// Comptabilité - Plan comptable
+import ComptesComptables from './components/comptabilite/ComptesComptables';
+import CompteComptableForm from './components/comptabilite/CompteComptableForm';
+
+
 
 function App() {
   const location = useLocation();
@@ -104,6 +116,9 @@ function App() {
 <Route path="/clients-administrations" element={<ClientsAdministrations />} />
 <Route path="/clients-ong" element={<ClientsOng />} />
 <Route path="/clients-collectivites" element={<ClientsCollectivites />} />
+<Route path="/clients-ecoles" element={<ClientsEcoles />} />
+<Route path="/clients-commerces" element={<ClientsCommerces />} />
+<Route path="/clients-hotels" element={<ClientsHotels />} />
 
 {/* Contrats clients */}
 <Route path="/contrats-clients" element={<ContratsClients />} />
@@ -113,11 +128,26 @@ function App() {
 <Route path="/contrats-clients/expirant" element={<ContratsClients />} />
 
 
+
+
+
+
+
+{/* ============================================ */}
+{/* COMPTABILITÉ - PLAN COMPTABLE */}
+{/* ============================================ */}
+<Route path="/plan-comptable" element={<ComptesComptables />} />
+<Route path="/plan-comptable/ajouter" element={<CompteComptableForm />} />
+<Route path="/plan-comptable/:id/modifier" element={<CompteComptableForm />} />
+
+
 //  RESSOURCES HUMAINES 
 <Route path="/departements" element={<Departements />} />
 <Route path="/departements/ajouter" element={<DepartementForm />} />
 <Route path="/departements/:id" element={<DepartementDetail />} />
 <Route path="/departements/:id/modifier" element={<DepartementForm />} />
+
+
 
 
 <Route path="/postes" element={<Postes />} />
@@ -139,6 +169,11 @@ function App() {
 <Route path="/contrats/ajouter" element={<ContratForm />} />
 <Route path="/contrats/:id" element={<ContratDetail />} />
 <Route path="/contrats/:id/modifier" element={<ContratForm />} />
+
+{/* Prestations */}
+<Route path="/prestations" element={<Prestations />} />
+<Route path="/prestations/ajouter" element={<PrestationForm />} />
+<Route path="/prestations/:id/modifier" element={<PrestationForm />} />
 
 
 <Route path="/presences" element={<Presences />} />

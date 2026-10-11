@@ -4,7 +4,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, Edit, Loader2, AlertCircle, CheckCircle,
   Plus, FileText, Building2, Calendar, DollarSign,
-  MapPin, Briefcase, Users, Hash, Percent, User
+  MapPin, Briefcase, Users, Hash, Percent, User,
+  RefreshCw, Lock
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
@@ -14,6 +15,7 @@ const ContratClientForm = () => {
   const navigate = useNavigate();
   const [chargement, setChargement] = useState(false);
   const [chargementInitial, setChargementInitial] = useState(false);
+  const [chargementNumero, setChargementNumero] = useState(false);
   const [erreur, setErreur] = useState(null);
   const [succes, setSucces] = useState(false);
 
@@ -21,6 +23,7 @@ const ContratClientForm = () => {
   const contratId = estEdition ? id : null;
 
   const [formData, setFormData] = useState({
+    numero: '',
     client: '',
     prestation: '',
     description: '',
@@ -38,7 +41,7 @@ const ContratClientForm = () => {
     conditions_particulieres: '',
   });
 
-  const [codeAffiche, setCodeAffiche] = useState('');
+  const [numeroModifieManuellement, setNumeroModifieManuellement] = useState(false);
   const [clients, setClients] = useState([]);
   const [employes, setEmployes] = useState([]);
 
@@ -47,10 +50,31 @@ const ContratClientForm = () => {
     if (estEdition && contratId) {
       chargerContrat(contratId);
     } else {
+      chargerProchainNumero();
       const clientParam = searchParams.get('client');
       if (clientParam) setFormData(prev => ({ ...prev, client: clientParam }));
     }
   }, [id]);
+
+  // ============================================================
+  // Charger le prochain numéro proposé
+  // ============================================================
+  const chargerProchainNumero = async () => {
+    setChargementNumero(true);
+    try {
+      const res = await AxiosInstance.get('/contrats-clients/prochain_numero/');
+      if (res.data?.numero) {
+        setFormData(prev => ({ ...prev, numero: res.data.numero }));
+        setNumeroModifieManuellement(false);
+      }
+    } catch (err) {
+      console.warn('Endpoint prochain_numero indisponible, génération locale');
+      const year = new Date().getFullYear();
+      setFormData(prev => ({ ...prev, numero: `CTR-${year}-000001` }));
+    } finally {
+      setChargementNumero(false);
+    }
+  };
 
   const chargerDonneesReference = async () => {
     try {
@@ -71,9 +95,8 @@ const ContratClientForm = () => {
       const response = await AxiosInstance.get(`/contrats-clients/${cid}/`);
       const data = response.data;
 
-      setCodeAffiche(data.numero || '');
-
       setFormData({
+        numero: data.numero || '',
         client: data.client || '',
         prestation: data.prestation || '',
         description: data.description || '',
@@ -90,6 +113,7 @@ const ContratClientForm = () => {
         statut: data.statut || 'brouillon',
         conditions_particulieres: data.conditions_particulieres || '',
       });
+      setNumeroModifieManuellement(true);
     } catch (err) {
       setErreur('Impossible de charger le contrat');
     } finally {
@@ -100,6 +124,15 @@ const ContratClientForm = () => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+
+    if (name === 'numero') {
+      setNumeroModifieManuellement(true);
+    }
+  };
+
+  const regenererNumero = async () => {
+    setNumeroModifieManuellement(false);
+    await chargerProchainNumero();
   };
 
   const handleSubmit = async (e) => {
@@ -114,9 +147,14 @@ const ContratClientForm = () => {
         if (dataToSend[key] === '' || dataToSend[key] === null) {
           if (['client', 'equipe'].includes(key)) dataToSend[key] = null;
           else if (['tva', 'jours_preavis'].includes(key)) dataToSend[key] = 0;
+          else if (key === 'numero') { /* garder */ }
           else delete dataToSend[key];
         }
       });
+
+      if (!dataToSend.numero) {
+        delete dataToSend.numero;
+      }
 
       if (estEdition) {
         await AxiosInstance.patch(`/contrats-clients/${contratId}/`, dataToSend);
@@ -170,7 +208,7 @@ const ContratClientForm = () => {
             </div>
             <h1 className="text-xl font-bold flex items-center gap-2">
               {estEdition ? <Edit className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5 text-primary" />}
-              {estEdition ? `Modifier — ${codeAffiche}` : 'Nouveau contrat client'}
+              {estEdition ? `Modifier — ${formData.numero}` : 'Nouveau contrat client'}
             </h1>
           </div>
         </div>
@@ -194,33 +232,82 @@ const ContratClientForm = () => {
 
           <div className="lg:col-span-2 space-y-6">
 
-            {/* Code auto */}
-            <div className={`card shadow-sm border ${estEdition ? 'bg-info/5 border-info/30' : 'bg-success/5 border-success/30'}`}>
-              <div className="card-body p-4 flex-row items-center gap-3">
-                {estEdition ? (
-                  <>
-                    <div className="w-10 h-10 rounded-lg bg-info/20 flex items-center justify-center">
-                      <Hash className="w-5 h-5 text-info" />
+            {/* ✅ NUMÉRO avec génération auto + modifiable */}
+            <div className="card bg-base-100 shadow-sm border border-base-300">
+              <div className="card-body p-0">
+                <div className="px-5 py-3 border-b bg-base-200/30 flex items-center gap-2">
+                  <Hash className="w-4 h-4 text-primary" />
+                  <h2 className="font-semibold text-sm">Numéro du contrat</h2>
+                </div>
+
+                <div className="p-5">
+                  <div className="form-control w-full">
+                    <label className="label py-0 pb-1.5">
+                      <span className="label-text text-sm font-medium flex items-center gap-1.5">
+                        <Hash className="w-3.5 h-3.5 text-base-content/40" />
+                        Numéro
+                        <span className="text-error">*</span>
+                      </span>
+                    </label>
+
+                    <div className="join w-full">
+                      <input
+                        type="text"
+                        name="numero"
+                        className="input input-bordered join-item w-full font-mono focus:input-primary"
+                        value={formData.numero}
+                        onChange={handleChange}
+                        required
+                        placeholder="CTR-2026-000001"
+                        maxLength="50"
+                      />
+                      <button
+                        type="button"
+                        onClick={regenererNumero}
+                        className="btn btn-outline join-item gap-2"
+                        disabled={chargementNumero}
+                        title="Régénérer un numéro automatique"
+                      >
+                        {chargementNumero ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="w-4 h-4" />
+                        )}
+                        Auto
+                      </button>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-base-content/60 uppercase">Numéro du contrat</p>
-                      <p className="font-mono font-bold text-lg text-info">{codeAffiche}</p>
-                    </div>
-                    <span className="badge badge-info badge-sm">🔒 Auto-généré</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-success" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-success">Numéro automatique</p>
-                      <p className="text-xs text-base-content/60 mt-0.5">
-                        Format : <span className="font-mono font-bold">CTR-{new Date().getFullYear()}-000001</span>
-                      </p>
-                    </div>
-                  </>
-                )}
+
+                    {chargementNumero ? (
+                      <label className="label py-0 pt-1">
+                        <span className="label-text-alt text-info flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Génération du numéro en cours...
+                        </span>
+                      </label>
+                    ) : estEdition ? (
+                      <label className="label py-0 pt-1">
+                        <span className="label-text-alt text-info flex items-center gap-1">
+                          <Lock className="w-3 h-3" />
+                          Numéro existant — modifiable
+                        </span>
+                      </label>
+                    ) : numeroModifieManuellement ? (
+                      <label className="label py-0 pt-1">
+                        <span className="label-text-alt text-warning flex items-center gap-1">
+                          <Edit className="w-3 h-3" />
+                          Numéro modifié manuellement — cliquez sur <strong>Auto</strong> pour régénérer
+                        </span>
+                      </label>
+                    ) : (
+                      <label className="label py-0 pt-1">
+                        <span className="label-text-alt text-success flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Numéro généré automatiquement — modifiable si nécessaire
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -528,7 +615,7 @@ const ContratClientForm = () => {
 
                 <div className="bg-base-100 rounded-xl p-4 border border-base-300">
                   <p className="font-mono text-xs text-base-content/50">
-                    {estEdition ? codeAffiche : `CTR-${new Date().getFullYear()}-...`}
+                    {formData.numero || 'CTR-2026-...'}
                   </p>
                   <p className="font-bold text-sm mt-1 truncate">
                     {clientSelectionne?.nom_complet || clientSelectionne?.nom || 'Client non sélectionné'}
