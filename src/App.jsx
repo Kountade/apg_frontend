@@ -112,6 +112,21 @@ import DashboardTresorerie from './components/tresorerie/DashboardTresorerie';
 import PeriodesPaie from './components/paie/PeriodesPaie';
 import PeriodePaieForm from './components/paie/PeriodePaieForm';
 import PeriodePaieDetail from './components/paie/PeriodePaieDetail';
+import BulletinsPaie from './components/paie/BulletinsPaie';
+import BulletinPaieDetail from './components/paie/BulletinPaieDetail';
+import Primes from './components/paie/Primes';
+import PrimeForm from './components/paie/PrimeForm';
+import Retenues from './components/paie/Retenues';
+import RetenueForm from './components/paie/RetenueForm';
+import AvancesSalaire from './components/paie/AvancesSalaire';
+import AvanceSalaireForm from './components/paie/AvanceSalaireForm';
+import AvanceSalaireDetail from './components/paie/AvanceSalaireDetail';
+import FichesPaie from './components/paie/FichesPaie';
+import FichePaieDetail from './components/paie/FichePaieDetail';
+import HistoriquePaie from './components/paie/HistoriquePaie';
+import ArchivesPaie from './components/paie/ArchivesPaie';
+import RapportsPaie from './components/paie/RapportsPaie';
+import DashboardPaie from './components/paie/DashboardPaie';
 function App() {
   const location = useLocation();
 
@@ -170,8 +185,54 @@ function App() {
 
 
 
+{/* ============================================================ */}
+{/* PAIE - DASHBOARD                                             */}
+{/* ============================================================ */}
+<Route path="/dashboard-paie" element={<DashboardPaie />} />
 
 
+{/* ============================================================ */}
+{/* PAIE - RAPPORTS                                              */}
+{/* ============================================================ */}
+<Route path="/rapports-paie" element={<RapportsPaie />} />
+{/* ============================================================ */}
+{/* PAIE - ARCHIVES                                               */}
+{/* ============================================================ */}
+<Route path="/archives-paie" element={<ArchivesPaie />} />
+
+{/* ============================================================ */}
+{/* PAIE - HISTORIQUE                                             */}
+{/* ============================================================ */}
+<Route path="/historique-paie" element={<HistoriquePaie />} />
+
+{/* ============================================================ */}
+{/* PAIE - FICHES DE PAIE                                        */}
+{/* ============================================================ */}
+<Route path="/fiches-paie" element={<FichesPaie />} />
+<Route path="/fiches-paie/:id" element={<FichePaieDetail />} />
+
+{/* ============================================================ */}
+{/* PAIE - RETENUES                                               */}
+{/* ============================================================ */}
+<Route path="/retenues" element={<Retenues />} />
+<Route path="/retenues/ajouter" element={<RetenueForm />} />
+<Route path="/retenues/:id/modifier" element={<RetenueForm />} />
+
+{/* ============================================================ */}
+{/* PAIE - AVANCES SUR SALAIRE                                    */}
+{/* ============================================================ */}
+<Route path="/avances-salaire" element={<AvancesSalaire />} />
+<Route path="/avances-salaire/ajouter" element={<AvanceSalaireForm />} />
+<Route path="/avances-salaire/:id" element={<AvanceSalaireDetail />} />
+<Route path="/avances-salaire/:id/modifier" element={<AvanceSalaireForm />} />
+
+{/* PAIE - PRIMES */}
+<Route path="/primes" element={<Primes />} />
+<Route path="/primes/ajouter" element={<PrimeForm />} />
+<Route path="/primes/:id/modifier" element={<PrimeForm />} />
+{/* PAIE - BULLETINS */}
+<Route path="/paie-bulletins" element={<BulletinsPaie />} />
+<Route path="/paie-bulletins/:id" element={<BulletinPaieDetail />} />
 {/* ============================================ */}
 {/* PAIE - PÉRIODES */}
 {/* ============================================ */}
