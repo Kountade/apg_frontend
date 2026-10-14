@@ -323,28 +323,42 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     },
 
     // ========================================================
-    // PAIE
+    // PAIE — VERSION ALIGNÉE
     // ========================================================
     {
       name: 'PAIE',
       icon: Wallet,
       items: [
+        // ----- Dashboard -----
         { id: 'dashboard-paie', text: 'Tableau de Bord Paie', icon: Gauge, path: '/dashboard-paie', permission: isPDG || isRH || isComptable },
-        { id: 'preparation-paie', text: 'Préparation Paie', icon: ClipboardList, path: '/paie-preparation', permission: isPDG || isRH, badge: paieEnAttente },
-        { id: 'calcul-paie', text: 'Calcul de la Paie', icon: Calculator, path: '/paie-calcul', permission: isPDG || isRH },
-        { id: 'controle-paie', text: 'Contrôle Paie', icon: ClipboardCheck, path: '/paie-controle', permission: isPDG || isRH || isComptable },
-        { id: 'validation-paie', text: 'Validation Paie', icon: CheckCircle, path: '/paie-validation', permission: isPDG },
+        { id: 'separator-paie-dash', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
+
+        // ----- Périodes de paie -----
+        { id: 'paie-periodes', text: 'Périodes de Paie', icon: CalendarDays, path: '/paie-periodes', permission: isPDG || isRH || isComptable, badge: paieEnAttente },
+        { id: 'nouvelle-periode-paie', text: 'Nouvelle Période', icon: PlusCircle, path: '/paie-periodes/ajouter', permission: isPDG || isRH },
         { id: 'separator-paie-1', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
-        { id: 'etat-salaire', text: 'État de Salaire', icon: FileText, path: '/etat-salaire', permission: isPDG || isRH || isComptable },
-        { id: 'fiches-paie', text: 'Fiches de Paie', icon: Receipt, path: '/fiches-paie', permission: isPDG || isRH || isComptable },
-        { id: 'bulletins-paie', text: 'Bulletins de Paie', icon: FileText, path: '/bulletins-paie', permission: isPDG || isRH || isComptable },
-        { id: 'separator-paie-2', text: '', icon: null, path: '#', permission: isPDG || isRH, separator: true },
-        { id: 'avances-salaire', text: 'Avances sur Salaire', icon: HandCoins, path: '/avances-salaire', permission: isPDG || isRH || isComptable },
-        { id: 'nouvelle-avance', text: 'Nouvelle Avance', icon: PlusCircle, path: '/avances-salaire/ajouter', permission: isPDG || isRH || isComptable },
+
+        // ----- Bulletins de paie -----
+        { id: 'paie-bulletins', text: 'Bulletins de Paie', icon: Receipt, path: '/paie-bulletins', permission: isPDG || isRH || isComptable },
+        { id: 'separator-paie-2', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
+
+        // ----- Primes & Retenues -----
         { id: 'primes', text: 'Primes & Indemnités', icon: DollarSign, path: '/primes', permission: isPDG || isRH },
         { id: 'nouvelle-prime', text: 'Nouvelle Prime', icon: PlusCircle, path: '/primes/ajouter', permission: isPDG || isRH },
         { id: 'retenues', text: 'Retenues', icon: FileMinus, path: '/retenues', permission: isPDG || isRH || isComptable },
+        { id: 'nouvelle-retenue', text: 'Nouvelle Retenue', icon: PlusCircle, path: '/retenues/ajouter', permission: isPDG || isRH },
         { id: 'separator-paie-3', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
+
+        // ----- Avances sur salaire -----
+        { id: 'avances-salaire', text: 'Avances sur Salaire', icon: HandCoins, path: '/avances-salaire', permission: isPDG || isRH || isComptable },
+        { id: 'nouvelle-avance', text: 'Nouvelle Avance', icon: PlusCircle, path: '/avances-salaire/ajouter', permission: isPDG || isRH || isComptable },
+        { id: 'separator-paie-4', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
+
+        // ----- Fiches de paie -----
+        { id: 'fiches-paie', text: 'Fiches de Paie', icon: FileText, path: '/fiches-paie', permission: isPDG || isRH || isComptable },
+        { id: 'separator-paie-5', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
+
+        // ----- Rapports & Historique -----
         { id: 'historique-paie', text: 'Historique Paie', icon: History, path: '/historique-paie', permission: isPDG || isRH || isComptable },
         { id: 'archives-paie', text: 'Archives Paie', icon: Archive, path: '/archives-paie', permission: isPDG || isComptable },
         { id: 'rapports-paie', text: 'Rapports Paie', icon: FileSpreadsheet, path: '/rapports-paie', permission: isPDG || isRH || isComptable }
@@ -352,13 +366,12 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     },
 
     // ========================================================
-    // CLIENTS & CONTRATS (avec ÉCOLES, COMMERCES, HÔTELS ajoutés)
+    // CLIENTS & CONTRATS
     // ========================================================
     {
       name: 'CLIENTS & CONTRATS',
       icon: Users,
       items: [
-        // ----- Clients -----
         { id: 'clients', text: 'Clients', icon: Users, path: '/clients', permission: isPDG || isComptable },
         { id: 'nouveau-client', text: 'Nouveau Client', icon: UserPlus, path: '/clients/ajouter', permission: isPDG || isComptable },
         { id: 'clients-particuliers', text: 'Particuliers', icon: Users, path: '/clients-particuliers', permission: isPDG || isComptable },
@@ -371,18 +384,15 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'clients-hotels', text: 'Hôtels', icon: Hotel, path: '/clients-hotels', permission: isPDG || isComptable },
         { id: 'separator-clients-1', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
 
-        // ----- Prestations -----
         { id: 'prestations', text: 'Prestations', icon: Briefcase, path: '/prestations', permission: isPDG || isComptable },
         { id: 'nouvelle-prestation', text: 'Nouvelle Prestation', icon: FilePlus, path: '/prestations/ajouter', permission: isPDG || isComptable },
         { id: 'separator-prestations-1', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
 
-        // ----- Contrats clients -----
         { id: 'contrats-clients', text: 'Contrats Clients', icon: FileSignature, path: '/contrats-clients', permission: isPDG || isComptable, badge: contratsExpirant },
         { id: 'nouveau-contrat-client', text: 'Nouveau Contrat', icon: FilePlus, path: '/contrats-clients/ajouter', permission: isPDG || isComptable },
         { id: 'contrats-expirant-clients', text: 'Contrats Expirants', icon: CalendarClock, path: '/contrats-clients/expirant', permission: isPDG || isComptable, badge: contratsExpirant },
         { id: 'separator-clients-2', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
 
-        // ----- Devis & Factures -----
         { id: 'devis', text: 'Devis', icon: FileText, path: '/devis', permission: isPDG || isComptable },
         { id: 'nouveau-devis', text: 'Nouveau Devis', icon: FilePlus, path: '/devis/ajouter', permission: isPDG || isComptable },
         { id: 'factures', text: 'Factures', icon: Receipt, path: '/factures', permission: isPDG || isComptable, badge: facturesImpayees },
@@ -722,7 +732,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     ...searchResults.map(r => ({ ...r, type: 'data' }))
   ];
 
-  // ✅ RENDU ITEM SANS BADGE "NOUVEAU"
+  // Rendu item sans badge "Nouveau"
   const renderMenuItem = (item, sectionName, isActive) => {
     if (item.separator) {
       return <div key={item.id} className="border-t border-primary/20 my-2 mx-1"></div>;

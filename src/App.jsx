@@ -94,8 +94,24 @@ import EtatCaisse from './components/tresorerie/EtatCaisse';
 import ComptesBancaires from './components/tresorerie/ComptesBancaires';
 import CompteBancaireForm from './components/tresorerie/CompteBancaireForm';
 import CompteBancaireDetail from './components/tresorerie/CompteBancaireDetail';
-
-
+import Encaissements from './components/tresorerie/Encaissements';
+import EncaissementForm from './components/tresorerie/EncaissementForm';
+import EncaissementDetail from './components/tresorerie/EncaissementDetail';
+import Decaissements from './components/tresorerie/Decaissements';
+import DecaissementForm from './components/tresorerie/DecaissementForm';
+import DecaissementDetail from './components/tresorerie/DecaissementDetail';
+import MouvementsTresorerie from './components/tresorerie/MouvementsTresorerie';
+import MouvementTresorerieDetail from './components/tresorerie/MouvementTresorerieDetail';
+import Previsions from './components/tresorerie/Previsions';
+import PrevisionForm from './components/tresorerie/PrevisionForm';
+import RapprochementsBancaires from './components/tresorerie/RapprochementsBancaires';
+import RapprochementBancaireForm from './components/tresorerie/RapprochementBancaireForm';
+import AlertesTresorerie from './components/tresorerie/AlertesTresorerie';
+import AlerteTresorerieForm from './components/tresorerie/AlerteTresorerieForm';
+import DashboardTresorerie from './components/tresorerie/DashboardTresorerie';
+import PeriodesPaie from './components/paie/PeriodesPaie';
+import PeriodePaieForm from './components/paie/PeriodePaieForm';
+import PeriodePaieDetail from './components/paie/PeriodePaieDetail';
 function App() {
   const location = useLocation();
 
@@ -152,6 +168,63 @@ function App() {
 
 
 
+
+
+
+
+{/* ============================================ */}
+{/* PAIE - PÉRIODES */}
+{/* ============================================ */}
+<Route path="/paie-periodes" element={<PeriodesPaie />} />
+<Route path="/paie-periodes/ajouter" element={<PeriodePaieForm />} />
+<Route path="/paie-periodes/:id" element={<PeriodePaieDetail />} />
+<Route path="/paie-periodes/:id/modifier" element={<PeriodePaieForm />} />
+
+
+{/* ============================================ */}
+{/* TRÉSORERIE - DASHBOARD */}
+{/* ============================================ */}
+<Route path="/dashboard-tresorerie" element={<DashboardTresorerie />} />
+{/* ============================================ */}
+{/* TRÉSORERIE - ALERTES */}
+{/* ============================================ */}
+<Route path="/alertes-tresorerie" element={<AlertesTresorerie />} />
+<Route path="/alertes-tresorerie/ajouter" element={<AlerteTresorerieForm />} />
+<Route path="/alertes-tresorerie/:id/modifier" element={<AlerteTresorerieForm />} />
+
+{/* ============================================ */}
+{/* TRÉSORERIE - RAPPROCHEMENT BANCAIRE */}
+{/* ============================================ */}
+<Route path="/rapprochement-bancaire" element={<RapprochementsBancaires />} />
+<Route path="/rapprochement-bancaire/ajouter" element={<RapprochementBancaireForm />} />
+<Route path="/rapprochement-bancaire/:id/modifier" element={<RapprochementBancaireForm />} />
+
+{/* ============================================ */}
+{/* TRÉSORERIE - PRÉVISIONS */}
+{/* ============================================ */}
+<Route path="/previsions" element={<Previsions />} />
+<Route path="/previsions/ajouter" element={<PrevisionForm />} />
+<Route path="/previsions/:id/modifier" element={<PrevisionForm />} />
+
+{/* ============================================ */}
+{/* TRÉSORERIE - MOUVEMENTS */}
+{/* ============================================ */}
+<Route path="/mouvements-tresorerie" element={<MouvementsTresorerie />} />
+<Route path="/mouvements-tresorerie/:id" element={<MouvementTresorerieDetail />} />
+{/* ============================================ */}
+{/* TRÉSORERIE - DÉCAISSEMENTS */}
+{/* ============================================ */}
+<Route path="/decaissements" element={<Decaissements />} />
+<Route path="/decaissements/ajouter" element={<DecaissementForm />} />
+<Route path="/decaissements/:id" element={<DecaissementDetail />} />
+<Route path="/decaissements/:id/modifier" element={<DecaissementForm />} />
+{/* ============================================ */}
+{/* TRÉSORERIE - ENCAISSEMENTS */}
+{/* ============================================ */}
+<Route path="/encaissements" element={<Encaissements />} />
+<Route path="/encaissements/ajouter" element={<EncaissementForm />} />
+<Route path="/encaissements/:id" element={<EncaissementDetail />} />
+<Route path="/encaissements/:id/modifier" element={<EncaissementForm />} />
 
 {/* ============================================ */}
 {/* TRÉSORERIE - COMPTES BANCAIRES */}
