@@ -64,6 +64,15 @@ import ClientsEcoles from './components/clients/ClientsEcoles';
 import ClientsCommerces from './components/clients/ClientsCommerces';
 import ClientsHotels from './components/clients/ClientsHotels';
 
+
+
+// ============================================================
+// CONTRATS - TYPES DE CONTRATS
+// ============================================================
+import TypesContrats from './components/clients/TypesContrats';
+import TypeContratForm from './components/clients/TypeContratForm';
+import TypeContratDetail from './components/clients/TypeContratDetail';
+
 import ContratClientDetail from './components/clients/ContratClientDetail';
 import ContratClientForm from './components/clients/ContratClientForm';
 import ContratsClients from './components/clients/ContratsClients';
@@ -179,6 +188,11 @@ function App() {
 <Route path="/contrats-clients/expirant" element={<ContratsClients />} />
 
 
+
+<Route path="/types-contrats" element={<TypesContrats />} />
+<Route path="/types-contrats/ajouter" element={<TypeContratForm />} />
+<Route path="/types-contrats/:id" element={<TypeContratDetail />} />
+<Route path="/types-contrats/:id/modifier" element={<TypeContratForm />} />
 
 
 

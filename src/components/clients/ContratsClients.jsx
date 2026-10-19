@@ -1,12 +1,12 @@
 // components/clients/ContratsClients.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   FileText, Search, Plus, Edit, Trash2, Eye, Loader2,
   AlertCircle, RefreshCw, Filter, ChevronLeft, ChevronRight,
   Building2, Calendar, DollarSign, FilePlus, FileCheck,
   CalendarClock, TrendingUp, CheckCircle, XCircle, Pause,
-  Play, Ban, Users
+  Play, Ban, Users, Layers
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
@@ -15,12 +15,14 @@ const ContratsClients = () => {
   const [contrats, setContrats] = useState([]);
   const [contratsFiltres, setContratsFiltres] = useState([]);
   const [clients, setClients] = useState([]);
+  const [typesContrats, setTypesContrats] = useState([]);      // ✅ NOUVEAU
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [recherche, setRecherche] = useState('');
   const [filtreStatut, setFiltreStatut] = useState('all');
   const [filtreFrequence, setFiltreFrequence] = useState('all');
   const [filtreClient, setFiltreClient] = useState('all');
+  const [filtreTypeContrat, setFiltreTypeContrat] = useState('all');  // ✅ NOUVEAU
   const [pageActuelle, setPageActuelle] = useState(1);
   const [elementsParPage] = useState(10);
   const [contratSelectionne, setContratSelectionne] = useState(null);
@@ -37,15 +39,18 @@ const ContratsClients = () => {
     setChargement(true);
     setErreur(null);
     try {
-      const [contratsRes, clientsRes] = await Promise.all([
+      const [contratsRes, clientsRes, typesRes] = await Promise.all([
         AxiosInstance.get('/contrats-clients/').catch(() => ({ data: [] })),
         AxiosInstance.get('/clients/').catch(() => ({ data: [] })),
+        AxiosInstance.get('/types-contrats/').catch(() => ({ data: [] })),  // ✅ NOUVEAU
       ]);
       const contratsData = contratsRes.data.results || contratsRes.data || [];
       const clientsData = clientsRes.data.results || clientsRes.data || [];
+      const typesData = typesRes.data.results || typesRes.data || [];
       setContrats(contratsData);
       setContratsFiltres(contratsData);
       setClients(clientsData);
+      setTypesContrats(typesData);
     } catch (err) {
       console.error('Erreur:', err);
       setErreur('Impossible de charger les contrats');
@@ -63,16 +68,24 @@ const ContratsClients = () => {
         c.numero?.toLowerCase().includes(terme) ||
         c.client_nom?.toLowerCase().includes(terme) ||
         c.prestation?.toLowerCase().includes(terme) ||
-        c.zone?.toLowerCase().includes(terme)
+        c.zone?.toLowerCase().includes(terme) ||
+        c.type_contrat_titre?.toLowerCase().includes(terme)   // ✅ NOUVEAU
       );
     }
     if (filtreStatut !== 'all') filtre = filtre.filter(c => c.statut === filtreStatut);
     if (filtreFrequence !== 'all') filtre = filtre.filter(c => c.frequence === filtreFrequence);
     if (filtreClient !== 'all') filtre = filtre.filter(c => String(c.client) === String(filtreClient));
+    if (filtreTypeContrat !== 'all') {                        // ✅ NOUVEAU
+      if (filtreTypeContrat === 'sans_type') {
+        filtre = filtre.filter(c => !c.type_contrat);
+      } else {
+        filtre = filtre.filter(c => String(c.type_contrat) === String(filtreTypeContrat));
+      }
+    }
 
     setContratsFiltres(filtre);
     setPageActuelle(1);
-  }, [recherche, filtreStatut, filtreFrequence, filtreClient, contrats]);
+  }, [recherche, filtreStatut, filtreFrequence, filtreClient, filtreTypeContrat, contrats]);
 
   const totalPages = Math.ceil(contratsFiltres.length / elementsParPage);
   const getElementsPage = () => {
@@ -153,7 +166,11 @@ const ContratsClients = () => {
       && c.jours_avant_expiration >= 0
       && c.jours_avant_expiration <= 30).length,
     expirés: contrats.filter(c => c.statut === 'expire').length,
+    avecType: contrats.filter(c => c.type_contrat).length,   // ✅ NOUVEAU
   };
+
+  const filtresActifs = recherche || filtreStatut !== 'all' || filtreFrequence !== 'all'
+    || filtreClient !== 'all' || filtreTypeContrat !== 'all';
 
   return (
     <div className="w-full p-6">
@@ -173,6 +190,9 @@ const ContratsClients = () => {
           </h1>
           <p className="text-base-content/60 mt-1">
             {contratsFiltres.length} contrat{contratsFiltres.length > 1 ? 's' : ''} trouvé{contratsFiltres.length > 1 ? 's' : ''}
+            {filtresActifs && contrats.length !== contratsFiltres.length && (
+              <span className="text-base-content/40"> (sur {contrats.length})</span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -189,7 +209,7 @@ const ContratsClients = () => {
       </div>
 
       {/* STATISTIQUES */}
-      <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="w-full grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <div className="card bg-base-100 shadow-sm border border-base-300">
           <div className="card-body p-4 flex-row items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -209,6 +229,17 @@ const ContratsClients = () => {
             <div>
               <p className="text-xs text-base-content/50 uppercase">Actifs</p>
               <p className="text-xl font-bold text-success">{stats.actifs}</p>
+            </div>
+          </div>
+        </div>
+        <div className="card bg-base-100 shadow-sm border border-base-300">
+          <div className="card-body p-4 flex-row items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
+              <Layers className="w-5 h-5 text-info" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50 uppercase">Avec type</p>
+              <p className="text-xl font-bold text-info">{stats.avecType}</p>
             </div>
           </div>
         </div>
@@ -245,7 +276,7 @@ const ContratsClients = () => {
                 <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
                 <input
                   type="text"
-                  placeholder="Rechercher par numéro, client, prestation..."
+                  placeholder="Rechercher par numéro, client, type, prestation..."
                   className="input input-bordered w-full pl-10"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
@@ -265,6 +296,21 @@ const ContratsClients = () => {
               <option value="expire">Expiré</option>
               <option value="resilie">Résilié</option>
               <option value="archive">Archivé</option>
+            </select>
+
+            {/* ✅ NOUVEAU : Filtre type de contrat */}
+            <select
+              className="select select-bordered select-sm max-w-[220px]"
+              value={filtreTypeContrat}
+              onChange={(e) => setFiltreTypeContrat(e.target.value)}
+            >
+              <option value="all">Tous les types</option>
+              <option value="sans_type">Sans type</option>
+              {typesContrats.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.titre}
+                </option>
+              ))}
             </select>
 
             <select
@@ -295,17 +341,20 @@ const ContratsClients = () => {
               ))}
             </select>
 
-            <button
-              className="btn btn-ghost btn-sm gap-2"
-              onClick={() => {
-                setRecherche('');
-                setFiltreStatut('all');
-                setFiltreFrequence('all');
-                setFiltreClient('all');
-              }}
-            >
-              <Filter className="w-4 h-4" /> Réinitialiser
-            </button>
+            {filtresActifs && (
+              <button
+                className="btn btn-ghost btn-sm gap-2"
+                onClick={() => {
+                  setRecherche('');
+                  setFiltreStatut('all');
+                  setFiltreFrequence('all');
+                  setFiltreClient('all');
+                  setFiltreTypeContrat('all');
+                }}
+              >
+                <Filter className="w-4 h-4" /> Réinitialiser
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -314,10 +363,27 @@ const ContratsClients = () => {
       {contratsFiltres.length === 0 ? (
         <div className="text-center py-12 bg-base-100 rounded-xl shadow-sm border border-base-300">
           <FileText className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
-          <p className="text-xl text-base-content/60">Aucun contrat trouvé</p>
-          <Link to="/contrats-clients/ajouter" className="btn btn-primary mt-4">
-            Créer un contrat
-          </Link>
+          <p className="text-xl text-base-content/60">
+            {filtresActifs ? 'Aucun contrat ne correspond aux filtres' : 'Aucun contrat trouvé'}
+          </p>
+          {filtresActifs ? (
+            <button
+              className="btn btn-ghost mt-4"
+              onClick={() => {
+                setRecherche('');
+                setFiltreStatut('all');
+                setFiltreFrequence('all');
+                setFiltreClient('all');
+                setFiltreTypeContrat('all');
+              }}
+            >
+              Réinitialiser les filtres
+            </button>
+          ) : (
+            <Link to="/contrats-clients/ajouter" className="btn btn-primary mt-4">
+              Créer un contrat
+            </Link>
+          )}
         </div>
       ) : (
         <>
@@ -327,6 +393,7 @@ const ContratsClients = () => {
                 <tr className="bg-base-200/50 border-b border-base-300">
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Numéro</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Client</th>
+                  <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Type</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Prestation</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Période</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Tarif</th>
@@ -352,6 +419,16 @@ const ContratsClients = () => {
                       </td>
                       <td>
                         <p className="font-medium truncate max-w-[180px]">{c.client_nom || '—'}</p>
+                      </td>
+                      <td>
+                        {c.type_contrat_titre ? (
+                          <span className="badge badge-info badge-sm gap-1 max-w-[160px]">
+                            <Layers className="w-3 h-3" />
+                            <span className="truncate">{c.type_contrat_titre}</span>
+                          </span>
+                        ) : (
+                          <span className="text-base-content/30 text-xs">—</span>
+                        )}
                       </td>
                       <td>
                         <p className="text-sm truncate max-w-[200px]">{c.prestation}</p>
@@ -436,7 +513,7 @@ const ContratsClients = () => {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
               <p className="text-sm text-base-content/60">
                 {((pageActuelle - 1) * elementsParPage) + 1} à{' '}
                 {Math.min(pageActuelle * elementsParPage, contratsFiltres.length)} sur{' '}

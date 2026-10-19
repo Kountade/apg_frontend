@@ -4,7 +4,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, FileText, Edit, Trash2, Loader2, AlertCircle,
   Building2, Calendar, DollarSign, User, MapPin, Briefcase,
-  CheckCircle, Clock, Users, Percent, Hash, TrendingUp
+  CheckCircle, Clock, Users, Percent, Hash, TrendingUp,
+  Layers, ExternalLink, FileBadge, Info, Eye, Download
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
@@ -158,6 +159,61 @@ const ContratClientDetail = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <div className="lg:col-span-2 space-y-6">
+
+          {/* ✅ NOUVEAU : Type de contrat */}
+          {contrat.type_contrat && (
+            <div className="card bg-gradient-to-br from-info/5 to-info/10 border border-info/20 shadow-sm">
+              <div className="px-5 py-3 border-b border-info/20 bg-info/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-info" />
+                  <h2 className="font-semibold text-sm">Type de contrat</h2>
+                </div>
+                <Link
+                  to={`/types-contrats/${contrat.type_contrat}`}
+                  className="btn btn-ghost btn-xs gap-1"
+                >
+                  Voir le modèle
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+              <div className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-info/20 flex items-center justify-center flex-shrink-0">
+                    <Layers className="w-6 h-6 text-info" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-base">{contrat.type_contrat_titre}</p>
+                    {contrat.type_contrat_code && (
+                      <p className="text-xs text-base-content/50 font-mono mt-0.5">
+                        {contrat.type_contrat_code}
+                      </p>
+                    )}
+                    {contrat.type_contrat_categorie && (
+                      <span className="badge badge-info badge-sm mt-2">
+                        {contrat.type_contrat_categorie}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contenu du contrat (aperçu) */}
+                {contrat.type_contrat_contenu && (
+                  <div className="mt-4 pt-4 border-t border-info/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-medium text-base-content/60 uppercase">
+                        Contenu type du contrat
+                      </p>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto bg-base-100 rounded-lg p-3 border border-base-300">
+                      <pre className="text-xs text-base-content/70 whitespace-pre-wrap font-sans">
+                        {contrat.type_contrat_contenu}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Informations principales */}
           <div className="card bg-base-100 shadow-sm border border-base-300">
@@ -344,6 +400,11 @@ const ContratClientDetail = () => {
                 <Link to={`/clients/${contrat.client}`} className="btn btn-ghost btn-sm justify-start w-full gap-2">
                   <User className="w-4 h-4" /> Voir le client
                 </Link>
+                {contrat.type_contrat && (
+                  <Link to={`/types-contrats/${contrat.type_contrat}`} className="btn btn-ghost btn-sm justify-start w-full gap-2">
+                    <Layers className="w-4 h-4" /> Voir le type de contrat
+                  </Link>
+                )}
                 <Link to={`/contrats-clients/${id}/modifier`} className="btn btn-ghost btn-sm justify-start w-full gap-2">
                   <Edit className="w-4 h-4" /> Modifier
                 </Link>
@@ -395,7 +456,14 @@ const ContratClientDetail = () => {
               </p>
               <div className="flex gap-3">
                 <button className="btn flex-1" onClick={() => setShowModalSuppression(false)}>Annuler</button>
-                <button className="btn btn-error flex-1" onClick={executerAction} disabled={chargementAction}>
+                <button
+                  className="btn btn-error flex-1"
+                  onClick={() => {
+                    setActionType('supprimer');
+                    executerAction();
+                  }}
+                  disabled={chargementAction}
+                >
                   {chargementAction ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Supprimer'}
                 </button>
               </div>
