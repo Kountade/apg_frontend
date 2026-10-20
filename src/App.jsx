@@ -250,10 +250,13 @@ function App() {
 {/* ============================================ */}
 {/* PAIE - PÉRIODES */}
 {/* ============================================ */}
+{/* ============================================================ */}
+{/* PAIE - PÉRIODES DE PAIE                                       */}
+{/* ============================================================ */}
 <Route path="/paie-periodes" element={<PeriodesPaie />} />
 <Route path="/paie-periodes/ajouter" element={<PeriodePaieForm />} />
-<Route path="/paie-periodes/:id" element={<PeriodePaieDetail />} />
 <Route path="/paie-periodes/:id/modifier" element={<PeriodePaieForm />} />
+<Route path="/paie-periodes/:id" element={<PeriodePaieDetail />} />
 
 
 {/* ============================================ */}

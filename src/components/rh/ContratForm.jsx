@@ -1,10 +1,11 @@
 // pages/contrats/ContratForm.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, FileCheck, Save, Edit, Loader2, AlertCircle,
   CheckCircle, Plus, Info, Building2, DollarSign, Eye,
-  User, Calendar, FileText, Hash, Briefcase, RefreshCw
+  User, Calendar, FileText, Hash, Briefcase, RefreshCw,
+  Layers, Timer, FileBadge, Clock
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
@@ -23,6 +24,7 @@ const ContratForm = () => {
   const [formData, setFormData] = useState({
     numero: '',
     employe: '',
+    type_contrat: '',        // ✅ NOUVEAU
     type: 'CDI',
     date_debut: new Date().toISOString().split('T')[0],
     date_fin: '',
@@ -33,22 +35,51 @@ const ContratForm = () => {
   });
 
   const [employes, setEmployes] = useState([]);
+  const [typesContrats, setTypesContrats] = useState([]);       // ✅ NOUVEAU
+  const [apercuTypeContrat, setApercuTypeContrat] = useState(null); // ✅ NOUVEAU
   const [fichierDocument, setFichierDocument] = useState(null);
 
   useEffect(() => {
-    chargerEmployes();
+    chargerDonnees();
     if (estEdition && contratId) {
       chargerContrat(contratId);
     } else {
-      // Pré-remplir l'employé si passé en query
       const empParam = searchParams.get('employe');
       if (empParam) {
         setFormData(prev => ({ ...prev, employe: empParam }));
       }
-      // Générer un numéro automatiquement
       genererNumero();
     }
   }, [id]);
+
+  // ============================================================
+  // ✅ CHARGEMENT DES RÉFÉRENCES
+  // ============================================================
+  const chargerDonnees = async () => {
+    try {
+      const [empRes, typesRes] = await Promise.all([
+        AxiosInstance.get('/employes/').catch(() => ({ data: [] })),
+        AxiosInstance.get('/types-contrats/actifs/').catch(() => ({ data: [] })),
+      ]);
+
+      const empData = empRes.data.results || empRes.data || [];
+      setEmployes(empData.filter(e => e.statut === 'actif'));
+
+      let typesData = typesRes.data.results || typesRes.data || [];
+      console.log('🔍 [RH TypesContrats] Reçus :', typesData);
+
+      // ✅ Filtre : uniquement les types "emploi" (contrats de travail)
+      const filtered = typesData.filter(t =>
+        t.categorie === 'emploi' && t.statut !== 'archive'
+      );
+
+      console.log('🔍 [RH TypesContrats] Filtrés emploi :', filtered);
+
+      setTypesContrats(filtered);
+    } catch (err) {
+      console.error('Erreur chargement:', err);
+    }
+  };
 
   const genererNumero = () => {
     const annee = new Date().getFullYear();
@@ -57,16 +88,6 @@ const ContratForm = () => {
       ...prev,
       numero: `CTR-${annee}-${timestamp}`,
     }));
-  };
-
-  const chargerEmployes = async () => {
-    try {
-      const response = await AxiosInstance.get('/employes/');
-      const data = response.data.results || response.data || [];
-      setEmployes(data.filter(e => e.statut === 'actif'));
-    } catch (err) {
-      console.error('Erreur chargement employés:', err);
-    }
   };
 
   const chargerContrat = async (cId) => {
@@ -78,6 +99,7 @@ const ContratForm = () => {
       setFormData({
         numero: data.numero || '',
         employe: data.employe || '',
+        type_contrat: data.type_contrat || '',   // ✅ NOUVEAU
         type: data.type || 'CDI',
         date_debut: data.date_debut || '',
         date_fin: data.date_fin || '',
@@ -86,6 +108,11 @@ const ContratForm = () => {
         renouvellement: data.renouvellement || false,
         document: null,
       });
+
+      // Charger l'aperçu si type sélectionné
+      if (data.type_contrat) {
+        chargerApercuType(data.type_contrat);
+      }
     } catch (err) {
       console.error('Erreur:', err);
       setErreur('Impossible de charger les données du contrat');
@@ -94,6 +121,59 @@ const ContratForm = () => {
       }
     } finally {
       setChargementInitial(false);
+    }
+  };
+
+  // ============================================================
+  // ✅ APERÇU TYPE DE CONTRAT
+  // ============================================================
+  const chargerApercuType = async (typeId) => {
+    try {
+      const res = await AxiosInstance.get(`/types-contrats/${typeId}/`);
+      setApercuTypeContrat(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleTypeContratChange = (e) => {
+    const typeId = e.target.value;
+    setFormData(prev => ({ ...prev, type_contrat: typeId }));
+
+    if (!typeId) {
+      setApercuTypeContrat(null);
+      return;
+    }
+
+    const type = typesContrats.find(t => String(t.id) === String(typeId));
+    if (type) {
+      chargerApercuType(typeId);
+
+      // Auto-fill : mapper la catégorie vers le type court
+      setFormData(prev => {
+        const updates = { ...prev };
+
+        // Calculer date_fin si durée définie
+        if (type.duree_mois && prev.date_debut && !prev.date_fin) {
+          const d = new Date(prev.date_debut);
+          d.setMonth(d.getMonth() + type.duree_mois);
+          updates.date_fin = d.toISOString().split('T')[0];
+        }
+
+        // Mapper automatiquement vers le type court (CDI/CDD/STAGE/TEMPORAIRE)
+        const titre = (type.titre || '').toLowerCase();
+        if (titre.includes('cdi') || titre.includes('indéterminée') || titre.includes('indeterminee')) {
+          updates.type = 'CDI';
+        } else if (titre.includes('cdd') || titre.includes('déterminée') || titre.includes('determinee')) {
+          updates.type = 'CDD';
+        } else if (titre.includes('stage')) {
+          updates.type = 'STAGE';
+        } else if (titre.includes('temporaire') || titre.includes('mission')) {
+          updates.type = 'TEMPORAIRE';
+        }
+
+        return updates;
+      });
     }
   };
 
@@ -116,23 +196,22 @@ const ContratForm = () => {
     setSucces(false);
 
     try {
-      // Validation dates
       if (formData.date_fin && formData.date_debut && formData.date_fin < formData.date_debut) {
         setErreur('La date de fin doit être postérieure à la date de début.');
         setChargement(false);
         return;
       }
 
-      // Préparer les données
       const dataToSend = { ...formData };
 
-      // Nettoyage
       Object.keys(dataToSend).forEach(key => {
         if (dataToSend[key] === '' || dataToSend[key] === null) {
           if (key === 'employe') {
-            // employé obligatoire, ne pas supprimer
+            // garder
           } else if (key === 'salaire') {
             dataToSend[key] = 0;
+          } else if (key === 'type_contrat') {
+            dataToSend[key] = null;
           } else if (key === 'document') {
             delete dataToSend[key];
           } else {
@@ -141,7 +220,6 @@ const ContratForm = () => {
         }
       });
 
-      // Créer FormData si fichier
       let payload = dataToSend;
       if (fichierDocument) {
         payload = new FormData();
@@ -247,7 +325,6 @@ const ContratForm = () => {
         </div>
       </div>
 
-      {/* MESSAGES */}
       {succes && (
         <div className="w-full alert alert-success rounded-none border-x-0 border-t-0 shadow-none py-2">
           <CheckCircle className="w-5 h-5" />
@@ -264,11 +341,125 @@ const ContratForm = () => {
         </div>
       )}
 
-      {/* FORMULAIRE */}
       <form onSubmit={handleSubmit} className="w-full">
         <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
 
           <div className="lg:col-span-2 space-y-6">
+
+            {/* ✅ NOUVEAU : Type de contrat (référentiel) */}
+            <div className="card bg-base-100 shadow-sm border border-base-300">
+              <div className="card-body p-0">
+                <div className="px-5 py-3 border-b border-base-300 bg-base-200/30 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-primary" />
+                  <h2 className="font-semibold text-sm">Type de contrat (référentiel)</h2>
+                  {typesContrats.length === 0 && (
+                    <span className="badge badge-warning badge-sm gap-1 ml-auto">
+                      <AlertCircle className="w-3 h-3" />
+                      Aucun type
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-5 space-y-4">
+                  <div className="form-control w-full">
+                    <label className="label py-0 pb-1.5">
+                      <span className="label-text text-sm font-medium">
+                        Choisir un modèle de contrat
+                      </span>
+                    </label>
+                    <select
+                      name="type_contrat"
+                      className="select select-bordered w-full focus:select-primary"
+                      value={formData.type_contrat}
+                      onChange={handleTypeContratChange}
+                      disabled={typesContrats.length === 0}
+                    >
+                      <option value="">
+                        {typesContrats.length === 0
+                          ? '— Aucun type disponible —'
+                          : '— Aucun modèle (saisie libre) —'}
+                      </option>
+                      {typesContrats.map(t => (
+                        <option key={t.id} value={t.id}>
+                          {t.code} — {t.titre}
+                          {t.duree_mois ? ` (${t.duree_mois} mois)` : ''}
+                        </option>
+                      ))}
+                    </select>
+
+                    {typesContrats.length === 0 ? (
+                      <label className="label py-0 pt-1">
+                        <span className="label-text-alt text-xs text-warning flex items-start gap-1">
+                          <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                          <span>
+                            Aucun type "emploi" disponible. Créez-en un dans{' '}
+                            <Link to="/types-contrats/ajouter" className="underline font-bold">
+                              Types de contrats
+                            </Link>
+                          </span>
+                        </span>
+                      </label>
+                    ) : (
+                      <label className="label py-0 pt-1">
+                        <span className="label-text-alt text-xs text-base-content/50">
+                          Le contenu et les paramètres seront pré-remplis
+                        </span>
+                      </label>
+                    )}
+                  </div>
+
+                  {apercuTypeContrat && (
+                    <div className="bg-info/5 border border-info/20 rounded-lg p-4">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-4 h-4 text-info flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-info text-sm mb-1">
+                            {apercuTypeContrat.titre}
+                          </p>
+                          <p className="text-xs text-base-content/70 mb-2">
+                            {apercuTypeContrat.description}
+                          </p>
+                          <div className="flex flex-wrap gap-2 text-[10px]">
+                            {apercuTypeContrat.duree_mois && (
+                              <span className="badge badge-ghost badge-sm gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {apercuTypeContrat.duree_mois} mois
+                              </span>
+                            )}
+                            {apercuTypeContrat.periode_essai_jours && (
+                              <span className="badge badge-ghost badge-sm gap-1">
+                                <Timer className="w-3 h-3" />
+                                Essai : {apercuTypeContrat.periode_essai_jours}j
+                              </span>
+                            )}
+                            {apercuTypeContrat.preavis_jours && (
+                              <span className="badge badge-ghost badge-sm gap-1">
+                                <Timer className="w-3 h-3" />
+                                Préavis : {apercuTypeContrat.preavis_jours}j
+                              </span>
+                            )}
+                            {apercuTypeContrat.fichier_modele && (
+                              <span className="badge badge-success badge-sm gap-1">
+                                <FileBadge className="w-3 h-3" />
+                                Fichier attaché
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <Link
+                          to={`/types-contrats/${apercuTypeContrat.id}`}
+                          target="_blank"
+                          className="btn btn-ghost btn-xs"
+                          title="Voir le détail"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* Section 1 — Identification */}
             <div className="card bg-base-100 shadow-sm border border-base-300">
@@ -300,18 +491,12 @@ const ContratForm = () => {
                           placeholder="CTR-2026-000001"
                         />
                       </div>
-                      <label className="label py-0 pt-1">
-                        <span className="label-text-alt text-xs text-base-content/50 flex items-center gap-1">
-                          <Info className="w-3 h-3" />
-                          Modifiable si besoin
-                        </span>
-                      </label>
                     </div>
 
                     <div className="form-control w-full">
                       <label className="label py-0 pb-1.5">
                         <span className="label-text text-sm font-medium flex items-center gap-1.5">
-                          Type de contrat
+                          Type court
                           <span className="text-error">*</span>
                         </span>
                       </label>
@@ -327,6 +512,11 @@ const ContratForm = () => {
                         <option value="STAGE">Stage</option>
                         <option value="TEMPORAIRE">Temporaire</option>
                       </select>
+                      <label className="label py-0 pt-1">
+                        <span className="label-text-alt text-xs text-base-content/50">
+                          Rempli automatiquement selon le type de contrat choisi
+                        </span>
+                      </label>
                     </div>
                   </div>
 
@@ -408,13 +598,13 @@ const ContratForm = () => {
                         required={formData.type !== 'CDI'}
                         min={formData.date_debut}
                       />
-                      <label className="label py-0 pt-1">
-                        <span className="label-text-alt text-xs text-base-content/50">
-                          {formData.type === 'CDI'
-                            ? 'Laisser vide pour un CDI'
-                            : 'Date de fin obligatoire pour ce type de contrat'}
-                        </span>
-                      </label>
+                      {apercuTypeContrat?.duree_mois && formData.date_debut && (
+                        <label className="label py-0 pt-1">
+                          <span className="label-text-alt text-xs text-info">
+                            Calculé automatiquement ({apercuTypeContrat.duree_mois} mois)
+                          </span>
+                        </label>
+                      )}
                     </div>
                   </div>
 
@@ -557,6 +747,17 @@ const ContratForm = () => {
                 </div>
 
                 <div className="bg-base-100 rounded-xl p-4 border border-base-300">
+
+                  {apercuTypeContrat && (
+                    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-base-200">
+                      <Layers className="w-4 h-4 text-info" />
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-base-content/50 uppercase">Type de contrat</p>
+                        <p className="font-medium text-xs truncate">{apercuTypeContrat.titre}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                       <FileCheck className="w-6 h-6 text-primary" />

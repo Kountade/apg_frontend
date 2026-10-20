@@ -6,7 +6,7 @@ import {
   AlertCircle, RefreshCw, Filter, ChevronLeft, ChevronRight,
   Building2, Briefcase, Calendar, Users, TrendingUp,
   DollarSign, FileText, AlertTriangle, CheckCircle, XCircle,
-  Clock, Download, CalendarClock
+  Clock, Download, CalendarClock, Layers
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
@@ -15,11 +15,13 @@ const Contrats = () => {
   const [contrats, setContrats] = useState([]);
   const [contratsFiltres, setContratsFiltres] = useState([]);
   const [employes, setEmployes] = useState([]);
+  const [typesContrats, setTypesContrats] = useState([]);       // ✅ NOUVEAU
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
   const [recherche, setRecherche] = useState('');
   const [filtreStatut, setFiltreStatut] = useState('all');
   const [filtreType, setFiltreType] = useState('all');
+  const [filtreTypeContrat, setFiltreTypeContrat] = useState('all');  // ✅ NOUVEAU
   const [filtreExpirant, setFiltreExpirant] = useState(false);
   const [pageActuelle, setPageActuelle] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -36,17 +38,21 @@ const Contrats = () => {
     setChargement(true);
     setErreur(null);
     try {
-      const [contratsRes, empRes] = await Promise.all([
+      const [contratsRes, empRes, typesRes] = await Promise.all([
         AxiosInstance.get('/contrats/'),
         AxiosInstance.get('/employes/').catch(() => ({ data: [] })),
+        AxiosInstance.get('/types-contrats/actifs/').catch(() => ({ data: [] })),  // ✅ NOUVEAU
       ]);
 
       const contratsData = contratsRes.data.results || contratsRes.data || [];
       const empData = empRes.data.results || empRes.data || [];
+      const typesData = typesRes.data.results || typesRes.data || [];
 
       setContrats(contratsData);
       setContratsFiltres(contratsData);
       setEmployes(empData);
+      // ✅ Filtre : uniquement les types "emploi"
+      setTypesContrats(typesData.filter(t => t.categorie === 'emploi'));
       setTotalPages(Math.ceil(contratsData.length / elementsParPage));
     } catch (err) {
       console.error('Erreur:', err);
@@ -61,7 +67,6 @@ const Contrats = () => {
     }
   };
 
-  // Vérifier si un contrat expire bientôt (30 jours)
   const estExpirant = (contrat) => {
     if (!contrat.date_fin || contrat.statut !== 'actif') return false;
     const aujourdhui = new Date();
@@ -88,7 +93,8 @@ const Contrats = () => {
       const terme = recherche.toLowerCase();
       filtre = filtre.filter(c =>
         c.numero?.toLowerCase().includes(terme) ||
-        c.employe_nom?.toLowerCase().includes(terme)
+        c.employe_nom?.toLowerCase().includes(terme) ||
+        c.type_contrat_titre?.toLowerCase().includes(terme)   // ✅ NOUVEAU
       );
     }
 
@@ -100,6 +106,15 @@ const Contrats = () => {
       filtre = filtre.filter(c => c.type === filtreType);
     }
 
+    // ✅ NOUVEAU : filtre par type de contrat (référentiel)
+    if (filtreTypeContrat !== 'all') {
+      if (filtreTypeContrat === 'sans_type') {
+        filtre = filtre.filter(c => !c.type_contrat);
+      } else {
+        filtre = filtre.filter(c => String(c.type_contrat) === String(filtreTypeContrat));
+      }
+    }
+
     if (filtreExpirant) {
       filtre = filtre.filter(c => estExpirant(c));
     }
@@ -107,7 +122,7 @@ const Contrats = () => {
     setContratsFiltres(filtre);
     setTotalPages(Math.ceil(filtre.length / elementsParPage));
     setPageActuelle(1);
-  }, [recherche, filtreStatut, filtreType, filtreExpirant, contrats]);
+  }, [recherche, filtreStatut, filtreType, filtreTypeContrat, filtreExpirant, contrats]);
 
   const getElementsPageActuelle = () => {
     const debut = (pageActuelle - 1) * elementsParPage;
@@ -188,18 +203,19 @@ const Contrats = () => {
     );
   }
 
-  // Statistiques
   const stats = {
     total: contrats.length,
     actifs: contrats.filter(c => c.statut === 'actif').length,
     expirant: contrats.filter(c => estExpirant(c)).length,
-    cdi: contrats.filter(c => c.type === 'CDI').length,
+    avecType: contrats.filter(c => c.type_contrat).length,   // ✅ NOUVEAU
   };
+
+  const filtresActifs = recherche || filtreStatut !== 'all' || filtreType !== 'all'
+    || filtreTypeContrat !== 'all' || filtreExpirant;
 
   return (
     <div className="w-full p-6">
 
-      {/* En-tête */}
       <div className="w-full flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2 text-xs text-base-content/50 uppercase tracking-wider font-medium mb-1">
@@ -214,21 +230,22 @@ const Contrats = () => {
           </h1>
           <p className="text-base-content/60 mt-1">
             {contratsFiltres.length} contrat{contratsFiltres.length > 1 ? 's' : ''} trouvé{contratsFiltres.length > 1 ? 's' : ''}
+            {filtresActifs && contrats.length !== contratsFiltres.length && (
+              <span className="text-base-content/40"> (sur {contrats.length})</span>
+            )}
           </p>
         </div>
         <div className="flex gap-2">
           <button onClick={chargerDonnees} className="btn btn-ghost btn-sm gap-2">
-            <RefreshCw className="w-4 h-4" />
-            Rafraîchir
+            <RefreshCw className="w-4 h-4" /> Rafraîchir
           </button>
           <Link to="/contrats/ajouter" className="btn btn-primary gap-2">
-            <Plus className="w-5 h-5" />
-            Nouveau contrat
+            <Plus className="w-5 h-5" /> Nouveau contrat
           </Link>
         </div>
       </div>
 
-      {/* Statistiques */}
+      {/* STATS */}
       <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="card bg-base-100 shadow-sm border border-base-300">
           <div className="card-body p-4 flex-row items-center gap-3">
@@ -236,7 +253,7 @@ const Contrats = () => {
               <FileCheck className="w-5 h-5 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-base-content/50 uppercase tracking-wider">Total</p>
+              <p className="text-xs text-base-content/50 uppercase">Total</p>
               <p className="text-xl font-bold">{stats.total}</p>
             </div>
           </div>
@@ -248,7 +265,7 @@ const Contrats = () => {
               <CheckCircle className="w-5 h-5 text-success" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-base-content/50 uppercase tracking-wider">Actifs</p>
+              <p className="text-xs text-base-content/50 uppercase">Actifs</p>
               <p className="text-xl font-bold text-success">{stats.actifs}</p>
             </div>
           </div>
@@ -260,7 +277,7 @@ const Contrats = () => {
               <AlertTriangle className="w-5 h-5 text-warning" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-base-content/50 uppercase tracking-wider">Expirant 30j</p>
+              <p className="text-xs text-base-content/50 uppercase">Expirant 30j</p>
               <p className="text-xl font-bold text-warning">{stats.expirant}</p>
             </div>
           </div>
@@ -269,17 +286,17 @@ const Contrats = () => {
         <div className="card bg-base-100 shadow-sm border border-base-300">
           <div className="card-body p-4 flex-row items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center flex-shrink-0">
-              <Briefcase className="w-5 h-5 text-info" />
+              <Layers className="w-5 h-5 text-info" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-base-content/50 uppercase tracking-wider">CDI</p>
-              <p className="text-xl font-bold text-info">{stats.cdi}</p>
+              <p className="text-xs text-base-content/50 uppercase">Avec type</p>
+              <p className="text-xl font-bold text-info">{stats.avecType}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filtres */}
+      {/* FILTRES */}
       <div className="card bg-base-100 shadow-sm border border-base-300 mb-6">
         <div className="card-body p-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -288,7 +305,7 @@ const Contrats = () => {
                 <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
                 <input
                   type="text"
-                  placeholder="Rechercher par numéro ou employé..."
+                  placeholder="Rechercher par numéro, employé, type..."
                   className="input input-bordered w-full pl-10 focus:input-primary"
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
@@ -296,12 +313,25 @@ const Contrats = () => {
               </div>
             </div>
 
+            {/* ✅ NOUVEAU : Filtre type de contrat */}
+            <select
+              className="select select-bordered select-sm max-w-[220px] focus:select-primary"
+              value={filtreTypeContrat}
+              onChange={(e) => setFiltreTypeContrat(e.target.value)}
+            >
+              <option value="all">Tous les types de contrat</option>
+              <option value="sans_type">Sans type</option>
+              {typesContrats.map(t => (
+                <option key={t.id} value={t.id}>{t.titre}</option>
+              ))}
+            </select>
+
             <select
               className="select select-bordered select-sm focus:select-primary"
               value={filtreType}
               onChange={(e) => setFiltreType(e.target.value)}
             >
-              <option value="all">Tous les types</option>
+              <option value="all">Types courts</option>
               <option value="CDI">CDI</option>
               <option value="CDD">CDD</option>
               <option value="STAGE">Stage</option>
@@ -329,31 +359,30 @@ const Contrats = () => {
               <span className="text-sm text-base-content/70">Expirant bientôt</span>
             </label>
 
-            <button
-              className="btn btn-ghost btn-sm gap-2"
-              onClick={() => {
-                setRecherche('');
-                setFiltreStatut('all');
-                setFiltreType('all');
-                setFiltreExpirant(false);
-              }}
-            >
-              <Filter className="w-4 h-4" />
-              Réinitialiser
-            </button>
+            {filtresActifs && (
+              <button
+                className="btn btn-ghost btn-sm gap-2"
+                onClick={() => {
+                  setRecherche('');
+                  setFiltreStatut('all');
+                  setFiltreType('all');
+                  setFiltreTypeContrat('all');
+                  setFiltreExpirant(false);
+                }}
+              >
+                <Filter className="w-4 h-4" /> Réinitialiser
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Liste */}
+      {/* LISTE */}
       {contratsFiltres.length === 0 ? (
         <div className="text-center py-12 bg-base-100 rounded-xl shadow-sm border border-base-300">
           <FileCheck className="w-16 h-16 text-base-content/30 mx-auto mb-4" />
-          <p className="text-xl text-base-content/60">Aucun contrat trouvé</p>
-          <p className="text-sm text-base-content/40 mt-2">
-            {recherche || filtreStatut !== 'all' || filtreType !== 'all' || filtreExpirant
-              ? 'Essayez de modifier vos filtres'
-              : 'Commencez par créer un nouveau contrat'}
+          <p className="text-xl text-base-content/60">
+            {filtresActifs ? 'Aucun contrat ne correspond aux filtres' : 'Aucun contrat trouvé'}
           </p>
           <Link to="/contrats/ajouter" className="btn btn-primary mt-4">
             Créer un contrat
@@ -368,6 +397,7 @@ const Contrats = () => {
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Numéro</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Employé</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Type</th>
+                  <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Type de contrat</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Période</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Salaire</th>
                   <th className="text-xs uppercase tracking-wider font-semibold text-base-content/60">Statut</th>
@@ -418,6 +448,16 @@ const Contrats = () => {
                       </td>
                       <td>{getBadgeType(contrat.type)}</td>
                       <td>
+                        {contrat.type_contrat_titre ? (
+                          <span className="badge badge-info badge-sm gap-1 max-w-[160px]">
+                            <Layers className="w-3 h-3" />
+                            <span className="truncate">{contrat.type_contrat_titre}</span>
+                          </span>
+                        ) : (
+                          <span className="text-base-content/30 text-xs">—</span>
+                        )}
+                      </td>
+                      <td>
                         <div className="text-xs">
                           <p className="flex items-center gap-1.5">
                             <Calendar className="w-3 h-3 text-base-content/40" />
@@ -437,18 +477,10 @@ const Contrats = () => {
                       <td>{getBadgeStatut(contrat.statut)}</td>
                       <td>
                         <div className="flex justify-end gap-1">
-                          <Link
-                            to={`/contrats/${contrat.id}`}
-                            className="btn btn-ghost btn-xs"
-                            title="Voir les détails"
-                          >
+                          <Link to={`/contrats/${contrat.id}`} className="btn btn-ghost btn-xs" title="Voir">
                             <Eye className="w-3.5 h-3.5" />
                           </Link>
-                          <Link
-                            to={`/contrats/${contrat.id}/modifier`}
-                            className="btn btn-ghost btn-xs"
-                            title="Modifier"
-                          >
+                          <Link to={`/contrats/${contrat.id}/modifier`} className="btn btn-ghost btn-xs" title="Modifier">
                             <Edit className="w-3.5 h-3.5" />
                           </Link>
                           <button
@@ -471,18 +503,14 @@ const Contrats = () => {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
               <p className="text-sm text-base-content/60">
                 Affichage de {((pageActuelle - 1) * elementsParPage) + 1} à{' '}
                 {Math.min(pageActuelle * elementsParPage, contratsFiltres.length)} sur{' '}
                 {contratsFiltres.length} contrats
               </p>
               <div className="flex gap-1">
-                <button
-                  className="btn btn-sm btn-ghost"
-                  onClick={() => allerPage(pageActuelle - 1)}
-                  disabled={pageActuelle === 1}
-                >
+                <button className="btn btn-sm btn-ghost" onClick={() => allerPage(pageActuelle - 1)} disabled={pageActuelle === 1}>
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 {[...Array(Math.min(totalPages, 5))].map((_, i) => {
@@ -501,11 +529,7 @@ const Contrats = () => {
                     </button>
                   );
                 })}
-                <button
-                  className="btn btn-sm btn-ghost"
-                  onClick={() => allerPage(pageActuelle + 1)}
-                  disabled={pageActuelle === totalPages}
-                >
+                <button className="btn btn-sm btn-ghost" onClick={() => allerPage(pageActuelle + 1)} disabled={pageActuelle === totalPages}>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -514,7 +538,7 @@ const Contrats = () => {
         </>
       )}
 
-      {/* Modal suppression */}
+      {/* MODAL SUPPRESSION */}
       {showModalSuppression && contratSelectionne && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowModalSuppression(false)}></div>
@@ -525,32 +549,16 @@ const Contrats = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">Supprimer le contrat</h3>
               <p className="text-base-content/60 mb-4">
-                Êtes-vous sûr de vouloir supprimer le contrat{' '}
-                <span className="font-bold">{contratSelectionne.numero}</span> ?
+                Supprimer le contrat <span className="font-bold font-mono">{contratSelectionne.numero}</span> ?
                 <br />
                 <span className="text-error text-sm">Cette action est irréversible !</span>
               </p>
               <div className="flex gap-3">
-                <button
-                  className="btn flex-1"
-                  onClick={() => setShowModalSuppression(false)}
-                  disabled={chargementAction}
-                >
+                <button className="btn flex-1" onClick={() => setShowModalSuppression(false)} disabled={chargementAction}>
                   Annuler
                 </button>
-                <button
-                  className="btn btn-error flex-1"
-                  onClick={supprimerContrat}
-                  disabled={chargementAction}
-                >
-                  {chargementAction ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Suppression...
-                    </>
-                  ) : (
-                    'Supprimer'
-                  )}
+                <button className="btn btn-error flex-1" onClick={supprimerContrat} disabled={chargementAction}>
+                  {chargementAction ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Suppression...</> : 'Supprimer'}
                 </button>
               </div>
             </div>

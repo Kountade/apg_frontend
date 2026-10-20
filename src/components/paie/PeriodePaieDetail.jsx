@@ -1,28 +1,29 @@
 // components/paie/PeriodePaieDetail.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
-  ArrowLeft, CalendarDays, Edit, Trash2, Loader2, AlertCircle,
-  Calculator, CheckCircle, XCircle, Clock, DollarSign,
-  CheckSquare, Lock, TrendingUp, Users, Activity,
-  MoreVertical, Send, Ban, Eye, FileText, Info,
-  ChevronRight, FileSpreadsheet, Printer
+  ArrowLeft, Loader2, AlertCircle, CheckCircle, Calendar,
+  Edit, Trash2, Calculator, ShieldCheck, CheckSquare, Send,
+  Lock, XCircle, Eye, Info, Users, Wallet, TrendingUp,
+  TrendingDown, FileText, Clock, PlayCircle, ChevronRight,
+  Hash, CalendarDays, Printer, Download, RefreshCw, ArrowRight,
+  Layers, Percent, Briefcase, Award
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
 // ============================================================
-// Configuration des statuts et actions
+// Config statuts
 // ============================================================
 const STATUTS_CONFIG = {
-  ouverte: { label: 'Ouverte', cls: 'badge-ghost', icon: Clock, color: 'ghost', description: 'Nouvelle période créée' },
-  en_preparation: { label: 'En préparation', cls: 'badge-info', icon: Activity, color: 'info', description: 'Préparation en cours' },
-  calculee: { label: 'Calculée', cls: 'badge-primary', icon: Calculator, color: 'primary', description: 'Bulletins calculés' },
-  controlee: { label: 'Contrôlée', cls: 'badge-warning', icon: CheckSquare, color: 'warning', description: 'En attente de validation' },
-  validee: { label: 'Validée', cls: 'badge-success', icon: CheckCircle, color: 'success', description: 'Prête à payer' },
-  en_attente_paiement: { label: 'En attente paiement', cls: 'badge-warning', icon: Clock, color: 'warning', description: 'En attente de paiement' },
-  payee: { label: 'Payée', cls: 'badge-success', icon: CheckCircle, color: 'success', description: 'Salaires versés' },
-  cloturee: { label: 'Clôturée', cls: 'badge-neutral', icon: Lock, color: 'neutral', description: 'Clôturée' },
-  annulee: { label: 'Annulée', cls: 'badge-error', icon: XCircle, color: 'error', description: 'Annulée' },
+  ouverte:             { label: 'Ouverte',             cls: 'badge-ghost',    icon: Clock,        color: 'ghost',    step: 1 },
+  en_preparation:      { label: 'En préparation',      cls: 'badge-warning',  icon: FileText,     color: 'warning',  step: 2 },
+  calculee:            { label: 'Calculée',            cls: 'badge-info',     icon: Calculator,   color: 'info',     step: 3 },
+  controlee:           { label: 'Contrôlée',           cls: 'badge-accent',   icon: ShieldCheck,  color: 'accent',   step: 4 },
+  validee:             { label: 'Validée',             cls: 'badge-primary',  icon: CheckSquare,  color: 'primary',  step: 5 },
+  en_attente_paiement: { label: 'En attente paiement', cls: 'badge-secondary',icon: Send,         color: 'secondary',step: 6 },
+  payee:               { label: 'Payée',               cls: 'badge-success',  icon: CheckCircle,  color: 'success',  step: 7 },
+  cloturee:            { label: 'Clôturée',            cls: 'badge-neutral',  icon: Lock,         color: 'neutral',  step: 8 },
+  annulee:             { label: 'Annulée',             cls: 'badge-error',    icon: XCircle,      color: 'error',    step: 0 },
 };
 
 const MOIS_NOMS = [
@@ -31,99 +32,112 @@ const MOIS_NOMS = [
 ];
 
 // ============================================================
-// Actions disponibles selon statut
+// Actions workflow
 // ============================================================
-const ACTIONS_STATUT = [
-  {
-    action: 'preparer',
-    label: 'Passer en préparation',
-    icon: Activity,
-    color: 'info',
-    from: ['ouverte'],
-    confirmation: 'Passer cette période en préparation ?',
-  },
+const ACTIONS_WORKFLOW = [
   {
     action: 'calculer',
     label: 'Calculer les bulletins',
     icon: Calculator,
-    color: 'primary',
+    cls: 'btn-info',
     from: ['ouverte', 'en_preparation'],
     confirmation: 'Calculer tous les bulletins de cette période ?',
+    description: 'Génère les bulletins de paie pour tous les employés actifs',
   },
   {
     action: 'controler',
     label: 'Contrôler',
-    icon: CheckSquare,
-    color: 'warning',
+    icon: ShieldCheck,
+    cls: 'btn-accent',
     from: ['calculee'],
     confirmation: 'Marquer cette période comme contrôlée ?',
+    description: 'Vérifiez les bulletins avant de valider définitivement',
   },
   {
     action: 'valider',
     label: 'Valider',
-    icon: CheckCircle,
-    color: 'success',
+    icon: CheckSquare,
+    cls: 'btn-primary',
     from: ['controlee'],
-    confirmation: 'Valider cette période ? Les bulletins seront prêts à être payés.',
+    confirmation: 'Valider définitivement cette période de paie ?',
+    description: 'La période sera validée et prête pour le paiement',
   },
   {
     action: 'marquer_payee',
     label: 'Marquer payée',
-    icon: DollarSign,
-    color: 'success',
+    icon: Send,
+    cls: 'btn-success',
     from: ['validee', 'en_attente_paiement'],
-    confirmation: 'Marquer cette période comme payée ? Tous les bulletins seront marqués payés.',
+    confirmation: 'Marquer tous les bulletins comme payés ?',
+    description: 'Enregistre le paiement de tous les salaires',
   },
   {
     action: 'cloturer',
     label: 'Clôturer',
     icon: Lock,
-    color: 'neutral',
+    cls: 'btn-neutral',
     from: ['payee'],
-    confirmation: 'Clôturer définitivement cette période ?',
-  },
-  {
-    action: 'annuler',
-    label: 'Annuler la période',
-    icon: Ban,
-    color: 'error',
-    danger: true,
-    from: ['ouverte', 'en_preparation', 'calculee', 'controlee'],
-    confirmation: 'Annuler définitivement cette période ? Cette action est irréversible.',
+    confirmation: 'Clôturer définitivement cette période ? (archivage)',
+    description: 'Archive la période. Aucune modification ne sera plus possible',
   },
 ];
 
 const PeriodePaieDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [periode, setPeriode] = useState(null);
-  const [bulletins, setBulletins] = useState([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState(null);
-  const [showModalSuppression, setShowModalSuppression] = useState(false);
-  const [showModalAction, setShowModalAction] = useState(false);
-  const [actionEnAttente, setActionEnAttente] = useState(null);
   const [chargementAction, setChargementAction] = useState(false);
-  const [menuStatutOuvert, setMenuStatutOuvert] = useState(false);
-  const [ongletActif, setOngletActif] = useState('infos');
+  const [messageSucces, setMessageSucces] = useState(null);
+  const [showModalSuppression, setShowModalSuppression] = useState(false);
+  const [actionEnCours, setActionEnCours] = useState(null);
 
+  // ------------------------------------------------------------
+  // Chargement
+  // ------------------------------------------------------------
   useEffect(() => {
     chargerPeriode();
   }, [id]);
 
   const chargerPeriode = async () => {
     setChargement(true);
+    setErreur(null);
     try {
-      const response = await AxiosInstance.get(`/periodes-paie/${id}/`);
-      setPeriode(response.data);
-
-      // Charger les bulletins
-      const bultRes = await AxiosInstance.get(`/bulletins-paie/?periode=${id}`).catch(() => ({ data: [] }));
-      setBulletins(bultRes.data.results || bultRes.data || []);
+      const res = await AxiosInstance.get(`/periodes-paie/${id}/`);
+      setPeriode(res.data);
     } catch (err) {
-      setErreur('Période introuvable');
+      console.error('Erreur:', err);
+      setErreur(
+        err.response?.status === 404
+          ? "Cette période de paie n'existe pas ou a été supprimée."
+          : 'Impossible de charger la période.'
+      );
     } finally {
       setChargement(false);
+    }
+  };
+
+  // ------------------------------------------------------------
+  // Actions workflow
+  // ------------------------------------------------------------
+  const executerAction = async (action) => {
+    const cfg = ACTIONS_WORKFLOW.find(a => a.action === action);
+    if (!confirm(cfg?.confirmation || 'Confirmer ?')) return;
+
+    setActionEnCours(action);
+    setChargementAction(true);
+    try {
+      await AxiosInstance.post(`/periodes-paie/${id}/${action}/`);
+      setMessageSucces(`Période ${cfg.label.toLowerCase()} avec succès.`);
+      await chargerPeriode();
+      setTimeout(() => setMessageSucces(null), 4000);
+    } catch (err) {
+      alert(err.response?.data?.error || 'Erreur lors du changement de statut');
+    } finally {
+      setChargementAction(false);
+      setActionEnCours(null);
     }
   };
 
@@ -131,49 +145,52 @@ const PeriodePaieDetail = () => {
     setChargementAction(true);
     try {
       await AxiosInstance.delete(`/periodes-paie/${id}/`);
-      navigate('/paie-periodes');
+      navigate('/periodes-paie');
     } catch (err) {
       alert(err.response?.data?.error || 'Erreur lors de la suppression');
-    } finally {
       setChargementAction(false);
     }
   };
 
-  const executerAction = async () => {
-    if (!actionEnAttente) return;
-    setChargementAction(true);
-    setShowModalAction(false);
-
-    try {
-      await AxiosInstance.post(`/periodes-paie/${id}/${actionEnAttente.action}/`);
-      await chargerPeriode();
-      setActionEnAttente(null);
-      setMenuStatutOuvert(false);
-    } catch (err) {
-      alert(err.response?.data?.error || 'Erreur lors de l\'action');
-    } finally {
-      setChargementAction(false);
-    }
+  // ------------------------------------------------------------
+  // Formatage
+  // ------------------------------------------------------------
+  const formaterMontant = (m) => {
+    if (!m || Number(m) <= 0) return '0 GNF';
+    return new Intl.NumberFormat('fr-FR').format(Number(m)) + ' GNF';
   };
 
-  const handleClickAction = (actionObj) => {
-    setMenuStatutOuvert(false);
-    setActionEnAttente(actionObj);
-    setShowModalAction(true);
+  const formaterMontantCourt = (m) => {
+    const num = Number(m || 0);
+    if (Math.abs(num) >= 1000000000) return (num / 1000000000).toFixed(1) + ' Md';
+    if (Math.abs(num) >= 1000000) return (num / 1000000).toFixed(1) + ' M';
+    if (Math.abs(num) >= 1000) return (num / 1000).toFixed(0) + ' k';
+    return num.toString();
   };
 
-  const formaterDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', {
-    day: 'numeric', month: 'long', year: 'numeric'
-  }) : '—';
+  const formaterDate = (d) => {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
 
-  const formaterDateHeure = (d) => d ? new Date(d).toLocaleString('fr-FR') : '—';
+  const formaterDateTime = (d) => {
+    if (!d) return '—';
+    return new Date(d).toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
-  const formaterMontant = (m) => m && Number(m) > 0
-    ? new Intl.NumberFormat('fr-FR').format(Number(m)) + ' GNF'
-    : '0 GNF';
-
-  const formaterMoisAnnee = (mois, annee) => `${MOIS_NOMS[mois - 1] || 'Mois'} ${annee}`;
-
+  // ------------------------------------------------------------
+  // Rendu : chargement / erreur
+  // ------------------------------------------------------------
   if (chargement) {
     return (
       <div className="flex items-center justify-center py-20 w-full">
@@ -182,427 +199,559 @@ const PeriodePaieDetail = () => {
     );
   }
 
-  if (erreur || !periode) {
+  if (erreur) {
     return (
-      <div className="text-center py-20 w-full">
+      <div className="text-center py-20 w-full px-6">
         <AlertCircle className="w-20 h-20 text-error mx-auto mb-4" />
-        <p className="text-xl text-base-content/70">{erreur || 'Période introuvable'}</p>
-        <Link to="/paie-periodes" className="btn btn-primary mt-4">Retour aux périodes</Link>
+        <p className="text-xl text-base-content/70 mb-4">{erreur}</p>
+        <div className="flex justify-center gap-2">
+          <button onClick={() => navigate('/periodes-paie')} className="btn btn-ghost">
+            <ArrowLeft className="w-4 h-4" /> Retour
+          </button>
+          <button onClick={chargerPeriode} className="btn btn-primary">Réessayer</button>
+        </div>
       </div>
     );
   }
 
-  const statutCfg = STATUTS_CONFIG[periode.statut] || { label: periode.statut, cls: 'badge-ghost', icon: Clock };
-  const IconStatut = statutCfg.icon;
-  const actionsDisponibles = ACTIONS_STATUT.filter(a => a.from.includes(periode.statut));
+  if (!periode) return null;
 
+  const statutCfg = STATUTS_CONFIG[periode.statut] || STATUTS_CONFIG.ouverte;
+  const StatutIcon = statutCfg.icon;
+  const actionsDisponibles = ACTIONS_WORKFLOW.filter(a =>
+    a.from.includes(periode.statut)
+  );
+  const estModifiable = ['ouverte', 'en_preparation'].includes(periode.statut);
+  const estSupprimable = ['ouverte', 'en_preparation', 'annulee'].includes(periode.statut);
+
+  const totalBrut = Number(periode.total_brut || 0);
+  const totalNet = Number(periode.total_net || 0);
+  const totalRetenues = Number(periode.total_retenues || 0);
+  const totalCnss = Number(periode.total_cnss || 0);
+
+  // Étapes du workflow (visuel)
+  const etapes = [
+    { key: 'ouverte', label: 'Ouverte' },
+    { key: 'calculee', label: 'Calculée' },
+    { key: 'controlee', label: 'Contrôlée' },
+    { key: 'validee', label: 'Validée' },
+    { key: 'payee', label: 'Payée' },
+    { key: 'cloturee', label: 'Clôturée' },
+  ];
+  const etapeActuelle = STATUTS_CONFIG[periode.statut]?.step || 0;
+
+  // ------------------------------------------------------------
+  // Rendu principal
+  // ------------------------------------------------------------
   return (
-    <div className="w-full p-6">
+    <div className="w-full min-h-screen bg-base-200/40 pb-24">
 
-      {/* EN-TÊTE */}
-      <div className="w-full flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/paie-periodes')} className="btn btn-ghost btn-circle">
-            <ArrowLeft className="w-6 h-6" />
+      {/* ============ EN-TÊTE ============ */}
+      <div className="w-full sticky top-0 z-20 bg-base-100 border-b border-base-300 shadow-sm">
+        <div className="flex items-center gap-4 px-6 py-3">
+          <button
+            onClick={() => navigate('/periodes-paie')}
+            className="btn btn-ghost btn-sm btn-circle"
+            title="Retour"
+          >
+            <ArrowLeft className="w-5 h-5" />
           </button>
-          <div>
-            <div className="flex items-center gap-2 text-xs text-base-content/50 uppercase tracking-wider font-medium mb-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 text-xs text-base-content/50 uppercase tracking-wider mb-0.5">
               <Calculator className="w-3 h-3" />
-              Paie / <Link to="/paie-periodes" className="hover:text-primary">Périodes</Link> /
-              <span className="text-primary font-mono">{String(periode.mois).padStart(2, '0')}/{periode.annee}</span>
+              Paie / Périodes /{' '}
+              <span className="text-primary font-mono">#{periode.id}</span>
             </div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <CalendarDays className="w-8 h-8 text-primary" />
-              {formaterMoisAnnee(periode.mois, periode.annee)}
+            <h1 className="text-xl font-bold flex items-center gap-2 truncate">
+              <Calendar className="w-5 h-5 text-primary flex-shrink-0" />
+              <span className="truncate">
+                {MOIS_NOMS[(periode.mois || 1) - 1]} {periode.annee}
+              </span>
             </h1>
-            <p className="text-base-content/60 mt-1">
-              {periode.libelle || `Paie ${formaterMoisAnnee(periode.mois, periode.annee)}`}
-            </p>
           </div>
-        </div>
 
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className={`badge ${statutCfg.cls} badge-lg gap-2`}>
-            <IconStatut className="w-4 h-4" />
-            {statutCfg.label}
-          </span>
-
-          {/* Dropdown actions */}
-          {actionsDisponibles.length > 0 && (
-            <div className="relative">
+          <div className="hidden md:flex items-center gap-2">
+            {estModifiable && (
+              <Link
+                to={`/periodes-paie/${periode.id}/modifier`}
+                className="btn btn-ghost btn-sm gap-2"
+              >
+                <Edit className="w-4 h-4" /> Modifier
+              </Link>
+            )}
+            {estSupprimable && (
               <button
-                onClick={() => setMenuStatutOuvert(!menuStatutOuvert)}
-                className="btn btn-outline gap-2"
+                onClick={() => setShowModalSuppression(true)}
+                className="btn btn-ghost btn-sm text-error gap-2"
                 disabled={chargementAction}
               >
-                <MoreVertical className="w-4 h-4" />
-                Actions
+                <Trash2 className="w-4 h-4" /> Supprimer
               </button>
+            )}
+          </div>
 
-              {menuStatutOuvert && (
-                <>
-                  <div className="fixed inset-0 z-20" onClick={() => setMenuStatutOuvert(false)}></div>
-                  <div className="absolute right-0 top-full mt-2 w-72 bg-base-100 rounded-lg shadow-xl border border-base-300 z-30 py-2">
-                    <div className="px-4 py-2 text-xs text-base-content/40 uppercase tracking-wider border-b border-base-200 mb-1">
-                      Actions disponibles
-                    </div>
-                    {actionsDisponibles.map((a) => {
-                      const IconAction = a.icon;
-                      return (
-                        <button
-                          key={a.action}
-                          onClick={() => handleClickAction(a)}
-                          disabled={chargementAction}
-                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-base-200 transition-colors text-left ${
-                            a.danger ? 'text-error hover:bg-error/10' : ''
-                          }`}
-                        >
-                          <IconAction className={`w-4 h-4 ${a.danger ? 'text-error' : `text-${a.color}`}`} />
-                          <span className="font-medium">{a.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {!['payee', 'cloturee', 'annulee'].includes(periode.statut) && (
-            <Link to={`/paie-periodes/${id}/modifier`} className="btn btn-primary gap-2">
-              <Edit className="w-4 h-4" /> Modifier
-            </Link>
-          )}
-
-          <button onClick={() => setShowModalSuppression(true)} className="btn btn-error gap-2">
-            <Trash2 className="w-4 h-4" /> Supprimer
-          </button>
+          <span className={`badge ${statutCfg.cls} badge-lg gap-1.5`}>
+            <StatutIcon className="w-4 h-4" />
+            {statutCfg.label}
+          </span>
         </div>
       </div>
 
-      {/* ALERTE STATUT */}
-      {periode.statut === 'controlee' && (
-        <div className="alert alert-warning mb-6">
-          <CheckSquare className="w-5 h-5" />
-          <div>
-            <p className="font-bold">En attente de validation</p>
-            <p className="text-sm">Cette période est contrôlée et attend la validation du PDG.</p>
-          </div>
-        </div>
-      )}
-
-      {periode.statut === 'validee' && (
-        <div className="alert alert-success mb-6">
+      {/* ============ MESSAGES ============ */}
+      {messageSucces && (
+        <div className="w-full alert alert-success rounded-none border-x-0 border-t-0 py-2">
           <CheckCircle className="w-5 h-5" />
-          <div>
-            <p className="font-bold">Validée — Prête à payer</p>
-            <p className="text-sm">Vous pouvez maintenant effectuer le paiement des salaires.</p>
-          </div>
+          <span>{messageSucces}</span>
         </div>
       )}
 
-      {/* CONTENU */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* ============ WORKFLOW STEPPER ============ */}
+      <div className="w-full px-6 pt-6">
+        <div className="card bg-base-100 shadow-sm border border-base-300">
+          <div className="card-body p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Layers className="w-4 h-4 text-primary" />
+              <h3 className="font-semibold text-sm">Workflow de traitement</h3>
+            </div>
+            <ul className="steps steps-horizontal w-full">
+              {etapes.map((e, idx) => {
+                const step = idx + 1;
+                const isActive = step === etapeActuelle;
+                const isDone = step < etapeActuelle;
+                return (
+                  <li
+                    key={e.key}
+                    className={`step ${isActive ? 'step-primary' : ''} ${isDone ? 'step-success' : ''}`}
+                    data-content={isDone ? '✓' : step}
+                  >
+                    {e.label}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      </div>
 
+      {/* ============ CONTENU ============ */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+
+        {/* ---------- COLONNE PRINCIPALE ---------- */}
         <div className="lg:col-span-2 space-y-6">
 
-          {/* Onglets */}
-          <div className="tabs tabs-boxed bg-base-100 shadow-sm p-1 border border-base-300">
-            <button
-              className={`tab gap-2 ${ongletActif === 'infos' ? 'tab-active' : ''}`}
-              onClick={() => setOngletActif('infos')}
-            >
-              <Info className="w-4 h-4" /> Informations
-            </button>
-            <button
-              className={`tab gap-2 ${ongletActif === 'bulletins' ? 'tab-active' : ''}`}
-              onClick={() => setOngletActif('bulletins')}
-            >
-              <FileSpreadsheet className="w-4 h-4" /> Bulletins
-              {bulletins.length > 0 && (
-                <span className="badge badge-sm">{bulletins.length}</span>
-              )}
-            </button>
-          </div>
-
-          {/* Onglet Informations */}
-          {ongletActif === 'infos' && (
-            <>
-              <div className="card bg-base-100 shadow-sm border border-base-300">
-                <div className="px-5 py-3 border-b bg-base-200/30 flex items-center gap-2">
-                  <Info className="w-4 h-4 text-primary" />
-                  <h2 className="font-semibold text-sm">Informations</h2>
-                </div>
-                <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="text-xs text-base-content/40 uppercase">Mois</label>
-                    <p className="font-medium mt-1">{MOIS_NOMS[periode.mois - 1]}</p>
+          {/* --- Carte principale --- */}
+          <div className="card bg-gradient-to-br from-primary/10 via-primary/5 to-base-100 shadow-sm border border-primary/20">
+            <div className="card-body">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-7 h-7 text-primary" />
                   </div>
                   <div>
-                    <label className="text-xs text-base-content/40 uppercase">Année</label>
-                    <p className="font-medium mt-1">{periode.annee}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-base-content/40 uppercase">Date de début</label>
-                    <p className="font-medium mt-1">{formaterDate(periode.date_debut)}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-base-content/40 uppercase">Date de fin</label>
-                    <p className="font-medium mt-1">{formaterDate(periode.date_fin)}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-base-content/40 uppercase">Date de paiement prévue</label>
-                    <p className="font-medium mt-1 text-info">{formaterDate(periode.date_paiement_prevue)}</p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-base-content/40 uppercase">Statut</label>
-                    <p className="mt-1">
-                      <span className={`badge ${statutCfg.cls} badge-sm gap-1`}>
-                        <IconStatut className="w-3 h-3" />
-                        {statutCfg.label}
-                      </span>
+                    <p className="text-xs text-base-content/50 uppercase tracking-wider">
+                      Période de paie
                     </p>
-                  </div>
-                  {periode.notes && (
-                    <div className="md:col-span-2">
-                      <label className="text-xs text-base-content/40 uppercase">Notes</label>
-                      <p className="text-sm mt-1 whitespace-pre-wrap">{periode.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Totaux */}
-              <div className="card bg-base-100 shadow-sm border border-base-300">
-                <div className="px-5 py-3 border-b bg-base-200/30 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-success" />
-                  <h2 className="font-semibold text-sm">Totaux de la période</h2>
-                </div>
-                <div className="p-5">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-3 bg-base-200/30 rounded-lg">
-                      <p className="text-xs text-base-content/50 uppercase">Employés</p>
-                      <p className="text-2xl font-bold text-primary">{periode.nombre_employes}</p>
-                    </div>
-                    <div className="p-3 bg-base-200/30 rounded-lg">
-                      <p className="text-xs text-base-content/50 uppercase">Total brut</p>
-                      <p className="text-lg font-bold font-mono">{formaterMontant(periode.total_brut)}</p>
-                    </div>
-                    <div className="p-3 bg-base-200/30 rounded-lg">
-                      <p className="text-xs text-base-content/50 uppercase">Total retenues</p>
-                      <p className="text-lg font-bold font-mono text-error">{formaterMontant(periode.total_retenues)}</p>
-                    </div>
-                    <div className="p-3 bg-base-200/30 rounded-lg">
-                      <p className="text-xs text-base-content/50 uppercase">CNSS</p>
-                      <p className="text-lg font-bold font-mono text-warning">{formaterMontant(periode.total_cnss)}</p>
-                    </div>
-                    <div className="p-3 bg-primary/5 border-2 border-primary/30 rounded-lg col-span-2">
-                      <p className="text-xs text-base-content/50 uppercase">Total net à payer</p>
-                      <p className="text-2xl font-bold text-primary font-mono">{formaterMontant(periode.total_net)}</p>
-                    </div>
+                    <p className="text-2xl font-bold mt-1">
+                      {MOIS_NOMS[(periode.mois || 1) - 1]} {periode.annee}
+                    </p>
+                    {periode.libelle && (
+                      <p className="text-sm text-base-content/60 mt-0.5">
+                        {periode.libelle}
+                      </p>
+                    )}
                   </div>
                 </div>
-              </div>
-
-              {/* Workflow */}
-              <div className="card bg-base-100 shadow-sm border border-base-300">
-                <div className="px-5 py-3 border-b bg-base-200/30 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-info" />
-                  <h2 className="font-semibold text-sm">Workflow de la période</h2>
-                </div>
-                <div className="p-5 space-y-3 text-sm">
-                  {periode.preparee_par_nom && (
-                    <div className="flex items-center gap-3 p-3 bg-info/5 rounded-lg">
-                      <Activity className="w-4 h-4 text-info" />
-                      <div>
-                        <p className="text-xs text-base-content/50">Préparée par</p>
-                        <p className="font-medium">{periode.preparee_par_nom}</p>
-                      </div>
-                    </div>
-                  )}
-                  {periode.controlee_par_nom && (
-                    <div className="flex items-center gap-3 p-3 bg-warning/5 rounded-lg">
-                      <CheckSquare className="w-4 h-4 text-warning" />
-                      <div>
-                        <p className="text-xs text-base-content/50">Contrôlée par</p>
-                        <p className="font-medium">{periode.controlee_par_nom}</p>
-                        <p className="text-xs text-base-content/40">{formaterDateHeure(periode.date_controle)}</p>
-                      </div>
-                    </div>
-                  )}
-                  {periode.validee_par_nom && (
-                    <div className="flex items-center gap-3 p-3 bg-success/5 rounded-lg">
-                      <CheckCircle className="w-4 h-4 text-success" />
-                      <div>
-                        <p className="text-xs text-base-content/50">Validée par</p>
-                        <p className="font-medium">{periode.validee_par_nom}</p>
-                        <p className="text-xs text-base-content/40">{formaterDateHeure(periode.date_validation)}</p>
-                      </div>
-                    </div>
-                  )}
-                  {periode.payee_par_nom && (
-                    <div className="flex items-center gap-3 p-3 bg-success/5 rounded-lg">
-                      <DollarSign className="w-4 h-4 text-success" />
-                      <div>
-                        <p className="text-xs text-base-content/50">Payée par</p>
-                        <p className="font-medium">{periode.payee_par_nom}</p>
-                        <p className="text-xs text-base-content/40">{formaterDateHeure(periode.date_paiement)}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Onglet Bulletins */}
-          {ongletActif === 'bulletins' && (
-            <div className="card bg-base-100 shadow-sm border border-base-300">
-              <div className="px-5 py-3 border-b bg-base-200/30 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <FileSpreadsheet className="w-4 h-4 text-info" />
-                  <h2 className="font-semibold text-sm">Bulletins de paie</h2>
-                </div>
-                <span className="badge badge-info badge-sm">
-                  {bulletins.length} bulletin{bulletins.length > 1 ? 's' : ''}
+                <span className={`badge ${statutCfg.cls} badge-lg gap-1.5 flex-shrink-0`}>
+                  <StatutIcon className="w-4 h-4" />
+                  {statutCfg.label}
                 </span>
               </div>
-              <div className="p-5">
-                {bulletins.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="table table-sm w-full">
-                      <thead>
-                        <tr className="border-b border-base-300">
-                          <th className="text-xs uppercase text-base-content/60">Numéro</th>
-                          <th className="text-xs uppercase text-base-content/60">Employé</th>
-                          <th className="text-xs uppercase text-base-content/60 text-right">Brut</th>
-                          <th className="text-xs uppercase text-base-content/60 text-right">Net</th>
-                          <th className="text-xs uppercase text-base-content/60">Statut</th>
-                          <th className="text-xs uppercase text-base-content/60 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {bulletins.map(b => (
-                          <tr key={b.id} className="border-b border-base-200 last:border-0">
-                            <td>
-                              <span className="font-mono text-xs">{b.numero}</span>
-                            </td>
-                            <td>
-                              <p className="font-medium text-sm">{b.employe_nom}</p>
-                            </td>
-                            <td className="text-right font-mono text-sm">
-                              {formaterMontant(b.salaire_brut)}
-                            </td>
-                            <td className="text-right font-mono text-sm font-bold text-primary">
-                              {formaterMontant(b.salaire_net)}
-                            </td>
-                            <td>
-                              <span className={`badge badge-sm ${
-                                b.statut === 'paye' ? 'badge-success' :
-                                b.statut === 'valide' ? 'badge-primary' : 'badge-ghost'
-                              }`}>
-                                {b.statut}
-                              </span>
-                            </td>
-                            <td>
-                              <div className="flex justify-end gap-1">
-                                <Link to={`/paie-bulletins/${b.id}`} className="btn btn-ghost btn-xs">
-                                  <Eye className="w-3.5 h-3.5" />
-                                </Link>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-center text-base-content/50 text-sm py-8">
-                    Aucun bulletin pour cette période
+
+              <div className="divider my-2"></div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <p className="text-xs text-base-content/50 uppercase mb-1">Employés</p>
+                  <p className="font-bold flex items-center gap-1">
+                    <Users className="w-4 h-4 text-base-content/40" />
+                    {periode.nombre_employes || 0}
                   </p>
+                </div>
+                <div>
+                  <p className="text-xs text-base-content/50 uppercase mb-1">Total brut</p>
+                  <p className="font-bold font-mono">{formaterMontantCourt(totalBrut)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-base-content/50 uppercase mb-1">Total net</p>
+                  <p className="font-bold font-mono text-success">{formaterMontantCourt(totalNet)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-base-content/50 uppercase mb-1">Période</p>
+                  <p className="font-mono text-xs">
+                    {formaterDate(periode.date_debut)}<br />
+                    → {formaterDate(periode.date_fin)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* --- Détail financier --- */}
+          <div className="card bg-base-100 shadow-sm border border-base-300">
+            <div className="card-body p-0">
+              <div className="px-5 py-3 border-b bg-base-200/30 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-primary" />
+                <h2 className="font-semibold text-sm">Détail financier</h2>
+              </div>
+              <div className="p-5">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-base-content/70">Salaire brut total</span>
+                    <span className="font-mono font-bold">{formaterMontant(totalBrut)}</span>
+                  </div>
+
+                  <div className="divider my-1"></div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-base-content/70 flex items-center gap-1.5">
+                      <Percent className="w-3.5 h-3.5 text-error" />
+                      CNSS salarial
+                    </span>
+                    <span className="font-mono font-bold text-error">
+                      -{formaterMontant(totalCnss)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-base-content/70 flex items-center gap-1.5">
+                      <TrendingDown className="w-3.5 h-3.5 text-error" />
+                      Autres retenues
+                    </span>
+                    <span className="font-mono font-bold text-error">
+                      -{formaterMontant(totalRetenues - totalCnss)}
+                    </span>
+                  </div>
+
+                  <div className="divider my-1"></div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-semibold">Total retenues</span>
+                    <span className="font-mono font-bold text-error">
+                      -{formaterMontant(totalRetenues)}
+                    </span>
+                  </div>
+
+                  <div className="divider my-2"></div>
+
+                  <div className="flex justify-between items-center bg-success/10 -mx-2 px-2 py-2 rounded">
+                    <span className="font-bold">NET À PAYER</span>
+                    <span className="font-mono font-bold text-success text-lg">
+                      {formaterMontant(totalNet)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* --- Informations --- */}
+          <div className="card bg-base-100 shadow-sm border border-base-300">
+            <div className="card-body p-0">
+              <div className="px-5 py-3 border-b bg-base-200/30 flex items-center gap-2">
+                <Info className="w-4 h-4 text-base-content/60" />
+                <h2 className="font-semibold text-sm">Informations</h2>
+              </div>
+              <div className="p-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-base-content/50 uppercase mb-1">Date de début</p>
+                    <p className="font-medium">{formaterDate(periode.date_debut)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-base-content/50 uppercase mb-1">Date de fin</p>
+                    <p className="font-medium">{formaterDate(periode.date_fin)}</p>
+                  </div>
+                  {periode.date_paiement_prevue && (
+                    <div>
+                      <p className="text-xs text-base-content/50 uppercase mb-1">Paiement prévu</p>
+                      <p className="font-medium">{formaterDate(periode.date_paiement_prevue)}</p>
+                    </div>
+                  )}
+                  {periode.date_paiement && (
+                    <div>
+                      <p className="text-xs text-base-content/50 uppercase mb-1">Payée le</p>
+                      <p className="font-medium text-success">
+                        {formaterDateTime(periode.date_paiement)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {periode.notes && (
+                  <>
+                    <div className="divider my-3"></div>
+                    <div>
+                      <p className="text-xs text-base-content/50 uppercase mb-1">Notes</p>
+                      <p className="text-sm text-base-content/80 whitespace-pre-wrap">
+                        {periode.notes}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* --- Suivi workflow --- */}
+          <div className="card bg-base-100 shadow-sm border border-base-300">
+            <div className="card-body p-0">
+              <div className="px-5 py-3 border-b bg-base-200/30 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                <h2 className="font-semibold text-sm">Historique du traitement</h2>
+              </div>
+              <div className="p-5">
+                <ul className="timeline timeline-vertical timeline-compact">
+
+                  {/* Création */}
+                  <li>
+                    <div className="timeline-middle">
+                      <CheckCircle className="w-5 h-5 text-success" />
+                    </div>
+                    <div className="timeline-end timeline-box bg-base-100 border-base-300">
+                      <p className="font-semibold text-sm">Création</p>
+                      <p className="text-xs text-base-content/60">
+                        {formaterDateTime(periode.created_at)}
+                      </p>
+                    </div>
+                    <hr className="bg-success" />
+                  </li>
+
+                  {/* Calcul */}
+                  <li>
+                    <hr className={periode.statut !== 'ouverte' && periode.statut !== 'en_preparation' ? 'bg-success' : 'bg-base-300'} />
+                    <div className="timeline-middle">
+                      {['calculee', 'controlee', 'validee', 'en_attente_paiement', 'payee', 'cloturee'].includes(periode.statut) ? (
+                        <CheckCircle className="w-5 h-5 text-success" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-base-content/30" />
+                      )}
+                    </div>
+                    <div className="timeline-end timeline-box bg-base-100 border-base-300">
+                      <p className="font-semibold text-sm">Calcul</p>
+                      <p className="text-xs text-base-content/60">
+                        {periode.preparee_par_nom ? `par ${periode.preparee_par_nom}` : 'En attente'}
+                      </p>
+                    </div>
+                    <hr className={['controlee', 'validee', 'en_attente_paiement', 'payee', 'cloturee'].includes(periode.statut) ? 'bg-success' : 'bg-base-300'} />
+                  </li>
+
+                  {/* Contrôle */}
+                  <li>
+                    <div className="timeline-middle">
+                      {['controlee', 'validee', 'en_attente_paiement', 'payee', 'cloturee'].includes(periode.statut) ? (
+                        <ShieldCheck className="w-5 h-5 text-success" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-base-content/30" />
+                      )}
+                    </div>
+                    <div className="timeline-end timeline-box bg-base-100 border-base-300">
+                      <p className="font-semibold text-sm">Contrôle</p>
+                      <p className="text-xs text-base-content/60">
+                        {periode.date_controle ? formaterDateTime(periode.date_controle) : 'En attente'}
+                      </p>
+                      {periode.controlee_par_nom && (
+                        <p className="text-xs text-base-content/60">par {periode.controlee_par_nom}</p>
+                      )}
+                    </div>
+                    <hr className={['validee', 'en_attente_paiement', 'payee', 'cloturee'].includes(periode.statut) ? 'bg-success' : 'bg-base-300'} />
+                  </li>
+
+                  {/* Validation */}
+                  <li>
+                    <div className="timeline-middle">
+                      {['validee', 'en_attente_paiement', 'payee', 'cloturee'].includes(periode.statut) ? (
+                        <CheckSquare className="w-5 h-5 text-success" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-base-content/30" />
+                      )}
+                    </div>
+                    <div className="timeline-end timeline-box bg-base-100 border-base-300">
+                      <p className="font-semibold text-sm">Validation</p>
+                      <p className="text-xs text-base-content/60">
+                        {periode.date_validation ? formaterDateTime(periode.date_validation) : 'En attente'}
+                      </p>
+                      {periode.validee_par_nom && (
+                        <p className="text-xs text-base-content/60">par {periode.validee_par_nom}</p>
+                      )}
+                    </div>
+                    <hr className={['payee', 'cloturee'].includes(periode.statut) ? 'bg-success' : 'bg-base-300'} />
+                  </li>
+
+                  {/* Paiement */}
+                  <li>
+                    <div className="timeline-middle">
+                      {['payee', 'cloturee'].includes(periode.statut) ? (
+                        <Send className="w-5 h-5 text-success" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-base-content/30" />
+                      )}
+                    </div>
+                    <div className="timeline-end timeline-box bg-base-100 border-base-300">
+                      <p className="font-semibold text-sm">Paiement</p>
+                      <p className="text-xs text-base-content/60">
+                        {periode.date_paiement ? formaterDateTime(periode.date_paiement) : 'En attente'}
+                      </p>
+                      {periode.payee_par_nom && (
+                        <p className="text-xs text-base-content/60">par {periode.payee_par_nom}</p>
+                      )}
+                    </div>
+                    <hr className={periode.statut === 'cloturee' ? 'bg-success' : 'bg-base-300'} />
+                  </li>
+
+                  {/* Clôture */}
+                  <li>
+                    <div className="timeline-middle">
+                      {periode.statut === 'cloturee' ? (
+                        <Lock className="w-5 h-5 text-success" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-base-content/30" />
+                      )}
+                    </div>
+                    <div className="timeline-end timeline-box bg-base-100 border-base-300">
+                      <p className="font-semibold text-sm">Clôture</p>
+                      <p className="text-xs text-base-content/60">
+                        {periode.statut === 'cloturee' ? 'Terminée' : 'En attente'}
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ---------- COLONNE LATÉRALE ---------- */}
+        <div className="lg:col-span-1 space-y-6">
+
+          {/* Actions workflow */}
+          {actionsDisponibles.length > 0 && (
+            <div className="card bg-base-100 shadow-sm border-2 border-primary/30">
+              <div className="card-body">
+                <div className="flex items-center gap-2 mb-3">
+                  <PlayCircle className="w-4 h-4 text-primary" />
+                  <h3 className="font-semibold text-sm">Actions disponibles</h3>
+                </div>
+                <div className="space-y-2">
+                  {actionsDisponibles.map(act => {
+                    const IconAction = act.icon;
+                    const isLoading = actionEnCours === act.action;
+                    return (
+                      <div key={act.action}>
+                        <button
+                          onClick={() => executerAction(act.action)}
+                          disabled={chargementAction}
+                          className={`btn ${act.cls} w-full gap-2 justify-start`}
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <IconAction className="w-4 h-4" />
+                          )}
+                          {act.label}
+                        </button>
+                        <p className="text-[10px] text-base-content/40 mt-1 pl-2">
+                          {act.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {estModifiable && (
+                  <>
+                    <div className="divider my-2"></div>
+                    <Link
+                      to={`/periodes-paie/${periode.id}/modifier`}
+                      className="btn btn-outline btn-sm w-full gap-2"
+                    >
+                      <Edit className="w-4 h-4" /> Modifier la période
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
           )}
 
-        </div>
-
-        {/* COLONNE LATÉRALE */}
-        <div className="space-y-6">
-
-          <div className={`card shadow-sm border-2 ${
-            periode.statut === 'payee' || periode.statut === 'validee' ? 'bg-success/5 border-success/30' :
-            periode.statut === 'controlee' ? 'bg-warning/5 border-warning/30' :
-            'bg-primary/5 border-primary/30'
-          }`}>
-            <div className="card-body text-center">
-              <div className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center ${
-                periode.statut === 'payee' || periode.statut === 'validee' ? 'bg-success/20' :
-                periode.statut === 'controlee' ? 'bg-warning/20' :
-                'bg-primary/20'
-              }`}>
-                <IconStatut className={`w-10 h-10 ${
-                  periode.statut === 'payee' || periode.statut === 'validee' ? 'text-success' :
-                  periode.statut === 'controlee' ? 'text-warning' :
-                  'text-primary'
-                }`} />
+          {/* Résumé */}
+          <div className="card bg-base-100 shadow-sm border border-base-300">
+            <div className="card-body p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Award className="w-4 h-4 text-primary" />
+                <h3 className="font-semibold text-sm">Résumé</h3>
               </div>
-              <p className="font-bold text-lg mt-2">{statutCfg.label}</p>
-              <p className="text-xs text-base-content/60">{statutCfg.description}</p>
-              <div className="divider my-2"></div>
-              <p className="text-2xl font-bold text-primary font-mono">
-                {formaterMontant(periode.total_net)}
-              </p>
-              <p className="text-xs text-base-content/50">Total net à payer</p>
+              <div className="stats stats-vertical shadow-sm w-full">
+                <div className="stat py-3 px-0">
+                  <div className="stat-title text-xs">Employés</div>
+                  <div className="stat-value text-lg">{periode.nombre_employes || 0}</div>
+                </div>
+                <div className="stat py-3 px-0">
+                  <div className="stat-title text-xs">Masse brute</div>
+                  <div className="stat-value text-base font-mono">
+                    {formaterMontantCourt(totalBrut)}
+                  </div>
+                </div>
+                <div className="stat py-3 px-0">
+                  <div className="stat-title text-xs">Masse nette</div>
+                  <div className="stat-value text-base font-mono text-success">
+                    {formaterMontantCourt(totalNet)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Info workflow */}
+          <div className="card bg-info/5 border border-info/20 shadow-sm">
+            <div className="card-body p-4">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-info flex-shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <p className="font-medium text-info mb-1">Workflow</p>
+                  <p className="text-base-content/70">
+                    Le workflow est <strong>séquentiel</strong> : chaque étape doit être
+                    complétée avant de passer à la suivante.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Actions rapides */}
           <div className="card bg-base-100 shadow-sm border border-base-300">
             <div className="card-body p-4">
-              <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
-                <ChevronRight className="w-4 h-4 text-primary" />
-                Actions rapides
-              </h4>
+              <h3 className="font-semibold text-sm mb-3">Actions rapides</h3>
               <div className="space-y-2">
-                {actionsDisponibles.slice(0, 5).map(a => {
-                  const IconAction = a.icon;
-                  return (
-                    <button
-                      key={a.action}
-                      onClick={() => handleClickAction(a)}
-                      disabled={chargementAction}
-                      className={`btn btn-sm justify-start w-full gap-2 ${
-                        a.danger ? 'btn-error btn-outline' : `btn-${a.color} btn-outline`
-                      }`}
-                    >
-                      <IconAction className="w-4 h-4" /> {a.label}
-                    </button>
-                  );
-                })}
+                <Link
+                  to={`/fiches-paie?periode=${periode.id}`}
+                  className="btn btn-outline btn-sm w-full gap-2 justify-start"
+                >
+                  <FileText className="w-4 h-4" />
+                  Voir les fiches
+                </Link>
+                <Link
+                  to="/periodes-paie"
+                  className="btn btn-outline btn-sm w-full gap-2 justify-start"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Toutes les périodes
+                </Link>
                 <button
                   onClick={() => window.print()}
-                  className="btn btn-ghost btn-sm justify-start w-full gap-2"
+                  className="btn btn-outline btn-sm w-full gap-2 justify-start"
                 >
-                  <Printer className="w-4 h-4" /> Imprimer
+                  <Printer className="w-4 h-4" />
+                  Imprimer
                 </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Informations système */}
-          <div className="card bg-base-100 shadow-sm border border-base-300">
-            <div className="card-body p-4">
-              <h4 className="font-medium text-sm mb-3">Informations système</h4>
-              <div className="space-y-3 text-xs">
-                <div>
-                  <span className="text-base-content/50">Créée le :</span>
-                  <p className="font-medium">{formaterDateHeure(periode.created_at)}</p>
-                </div>
-                <div>
-                  <span className="text-base-content/50">Modifiée le :</span>
-                  <p className="font-medium">{formaterDateHeure(periode.updated_at)}</p>
-                </div>
               </div>
             </div>
           </div>
@@ -610,48 +759,13 @@ const PeriodePaieDetail = () => {
         </div>
       </div>
 
-      {/* MODAL ACTION */}
-      {showModalAction && actionEnAttente && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowModalAction(false)}></div>
-          <div className="relative bg-base-100 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
-            <div className="text-center">
-              <div className={`w-16 h-16 rounded-full ${
-                actionEnAttente.danger ? 'bg-error/20' : `bg-${actionEnAttente.color}/20`
-              } flex items-center justify-center mx-auto mb-4`}>
-                <actionEnAttente.icon className={`w-8 h-8 ${
-                  actionEnAttente.danger ? 'text-error' : `text-${actionEnAttente.color}`
-                }`} />
-              </div>
-
-              <h3 className="text-xl font-bold mb-2">{actionEnAttente.label}</h3>
-              <p className="text-base-content/60 mb-4">{actionEnAttente.confirmation}</p>
-
-              <div className="flex gap-3">
-                <button className="btn flex-1" onClick={() => setShowModalAction(false)} disabled={chargementAction}>
-                  Annuler
-                </button>
-                <button
-                  className={`btn flex-1 ${actionEnAttente.danger ? 'btn-error' : `btn-${actionEnAttente.color}`}`}
-                  onClick={executerAction}
-                  disabled={chargementAction}
-                >
-                  {chargementAction ? (
-                    <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Traitement...</>
-                  ) : (
-                    <><CheckCircle className="w-4 h-4 mr-2" /> Confirmer</>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL SUPPRESSION */}
+      {/* ============ MODAL SUPPRESSION ============ */}
       {showModalSuppression && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowModalSuppression(false)}></div>
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowModalSuppression(false)}
+          ></div>
           <div className="relative bg-base-100 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6">
             <div className="text-center">
               <div className="w-16 h-16 rounded-full bg-error/20 flex items-center justify-center mx-auto mb-4">
@@ -659,15 +773,24 @@ const PeriodePaieDetail = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">Supprimer la période</h3>
               <p className="text-base-content/60 mb-4">
-                Supprimer la période <strong>{formaterMoisAnnee(periode.mois, periode.annee)}</strong> ?
+                Supprimer la période{' '}
+                <strong>{MOIS_NOMS[(periode.mois || 1) - 1]} {periode.annee}</strong> ?
                 <br />
-                <span className="text-error text-sm">Tous les bulletins seront supprimés.</span>
+                <span className="text-sm">Tous les bulletins associés seront également supprimés.</span>
               </p>
               <div className="flex gap-3">
-                <button className="btn flex-1" onClick={() => setShowModalSuppression(false)} disabled={chargementAction}>
+                <button
+                  className="btn flex-1"
+                  onClick={() => setShowModalSuppression(false)}
+                  disabled={chargementAction}
+                >
                   Annuler
                 </button>
-                <button className="btn btn-error flex-1" onClick={supprimerPeriode} disabled={chargementAction}>
+                <button
+                  className="btn btn-error flex-1"
+                  onClick={supprimerPeriode}
+                  disabled={chargementAction}
+                >
                   {chargementAction ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Supprimer'}
                 </button>
               </div>

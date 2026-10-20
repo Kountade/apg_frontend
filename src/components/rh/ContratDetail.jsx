@@ -5,7 +5,8 @@ import {
   ArrowLeft, FileCheck, Edit, Trash2, Loader2, AlertCircle,
   Calendar, Clock, Building2, Briefcase, User, DollarSign,
   FileText, TrendingUp, RefreshCw, AlertTriangle, CheckCircle,
-  Download, Printer, Hash, CalendarClock, Eye
+  Download, Printer, Hash, CalendarClock, Eye, Layers,
+  ExternalLink, FileBadge, Info, Timer
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
@@ -30,14 +31,11 @@ const ContratDetail = () => {
       const response = await AxiosInstance.get(`/contrats/${id}/`);
       setContrat(response.data);
 
-      // Charger l'employé
       if (response.data.employe) {
         try {
           const empRes = await AxiosInstance.get(`/employes/${response.data.employe}/`);
           setEmploye(empRes.data);
-        } catch (e) {
-          // Silencieux
-        }
+        } catch (e) { /* silencieux */ }
       }
     } catch (err) {
       console.error('Erreur:', err);
@@ -104,8 +102,7 @@ const ContratDetail = () => {
 
   const joursRestants = () => {
     if (!contrat?.date_fin) return null;
-    const diff = Math.ceil((new Date(contrat.date_fin) - new Date()) / (1000 * 60 * 60 * 24));
-    return diff;
+    return Math.ceil((new Date(contrat.date_fin) - new Date()) / (1000 * 60 * 60 * 24));
   };
 
   const estExpirant = () => {
@@ -166,7 +163,6 @@ const ContratDetail = () => {
   return (
     <div className="w-full p-6">
 
-      {/* Bandeau alerte expiration */}
       {estExpirant() && (
         <div className="w-full alert alert-warning rounded-xl border border-warning/30 mb-6">
           <AlertTriangle className="w-5 h-5" />
@@ -174,13 +170,10 @@ const ContratDetail = () => {
             <p className="font-medium text-sm">
               Ce contrat expire dans <strong>{jours} jour{jours > 1 ? 's' : ''}</strong>
             </p>
-            <p className="text-xs opacity-80">
-              Pensez à le renouveler ou à le clôturer
-            </p>
+            <p className="text-xs opacity-80">Pensez à le renouveler ou à le clôturer</p>
           </div>
           <Link to={`/contrats/${id}/modifier`} className="btn btn-warning btn-sm gap-2">
-            <RefreshCw className="w-4 h-4" />
-            Renouveler
+            <RefreshCw className="w-4 h-4" /> Renouveler
           </Link>
         </div>
       )}
@@ -200,10 +193,7 @@ const ContratDetail = () => {
       {/* EN-TÊTE */}
       <div className="w-full flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate('/contrats')}
-            className="btn btn-ghost btn-circle"
-          >
+          <button onClick={() => navigate('/contrats')} className="btn btn-ghost btn-circle">
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div>
@@ -237,34 +227,77 @@ const ContratDetail = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-ghost gap-2"
-              title="Télécharger le document"
             >
-              <Download className="w-4 h-4" />
-              Document
+              <Download className="w-4 h-4" /> Document
             </a>
           )}
-          <Link
-            to={`/contrats/${id}/modifier`}
-            className="btn btn-primary gap-2"
-          >
-            <Edit className="w-4 h-4" />
-            Modifier
+          <Link to={`/contrats/${id}/modifier`} className="btn btn-primary gap-2">
+            <Edit className="w-4 h-4" /> Modifier
           </Link>
           <button
             onClick={() => setShowModalSuppression(true)}
             className="btn btn-error gap-2"
           >
-            <Trash2 className="w-4 h-4" />
-            Supprimer
+            <Trash2 className="w-4 h-4" /> Supprimer
           </button>
         </div>
       </div>
 
-      {/* CONTENU */}
       <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Colonne principale */}
         <div className="lg:col-span-2 space-y-6">
+
+          {/* ✅ NOUVEAU : Type de contrat (référentiel) */}
+          {contrat.type_contrat && (
+            <div className="card bg-gradient-to-br from-info/5 to-info/10 border border-info/20 shadow-sm">
+              <div className="px-5 py-3 border-b border-info/20 bg-info/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-info" />
+                  <h2 className="font-semibold text-sm">Type de contrat</h2>
+                </div>
+                <Link
+                  to={`/types-contrats/${contrat.type_contrat}`}
+                  className="btn btn-ghost btn-xs gap-1"
+                >
+                  Voir le modèle
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+              <div className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-info/20 flex items-center justify-center flex-shrink-0">
+                    <Layers className="w-6 h-6 text-info" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-base">{contrat.type_contrat_titre}</p>
+                    {contrat.type_contrat_code && (
+                      <p className="text-xs text-base-content/50 font-mono mt-0.5">
+                        {contrat.type_contrat_code}
+                      </p>
+                    )}
+                    {contrat.type_contrat_categorie && (
+                      <span className="badge badge-info badge-sm mt-2">
+                        {contrat.type_contrat_categorie}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {contrat.type_contrat_contenu && (
+                  <div className="mt-4 pt-4 border-t border-info/20">
+                    <p className="text-xs font-medium text-base-content/60 uppercase mb-2">
+                      Contenu type du contrat
+                    </p>
+                    <div className="max-h-48 overflow-y-auto bg-base-100 rounded-lg p-3 border border-base-300">
+                      <pre className="text-xs text-base-content/70 whitespace-pre-wrap font-sans">
+                        {contrat.type_contrat_contenu}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Informations du contrat */}
           <div className="card bg-base-100 shadow-sm border border-base-300">
@@ -285,7 +318,7 @@ const ContratDetail = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs text-base-content/40 uppercase tracking-wider">Type</label>
+                    <label className="text-xs text-base-content/40 uppercase tracking-wider">Type court</label>
                     <p className="mt-1">{getBadgeType()}</p>
                   </div>
 
@@ -334,15 +367,9 @@ const ContratDetail = () => {
                     <label className="text-xs text-base-content/40 uppercase tracking-wider">Renouvelable</label>
                     <p className="font-medium mt-1 flex items-center gap-2">
                       {contrat.renouvellement ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 text-success" />
-                          <span className="text-success">Oui</span>
-                        </>
+                        <><CheckCircle className="w-4 h-4 text-success" /><span className="text-success">Oui</span></>
                       ) : (
-                        <>
-                          <span className="w-4"></span>
-                          <span className="text-base-content/50">Non</span>
-                        </>
+                        <><span className="w-4"></span><span className="text-base-content/50">Non</span></>
                       )}
                     </p>
                   </div>
@@ -351,8 +378,7 @@ const ContratDetail = () => {
                 {contrat.document && (
                   <div className="mt-5 pt-5 border-t border-base-200">
                     <label className="text-xs text-base-content/40 uppercase tracking-wider flex items-center gap-2">
-                      <FileText className="w-3.5 h-3.5" />
-                      Document scanné
+                      <FileText className="w-3.5 h-3.5" /> Document scanné
                     </label>
                     <a
                       href={contrat.document}
@@ -360,8 +386,7 @@ const ContratDetail = () => {
                       rel="noopener noreferrer"
                       className="mt-2 inline-flex items-center gap-2 text-sm text-primary hover:underline"
                     >
-                      <Download className="w-4 h-4" />
-                      Télécharger le document
+                      <Download className="w-4 h-4" /> Télécharger le document
                     </a>
                   </div>
                 )}
@@ -369,89 +394,79 @@ const ContratDetail = () => {
             </div>
           </div>
 
-          {/* Employé concerné */}
+          {/* Employé */}
           {employe && (
             <div className="card bg-base-100 shadow-sm border border-base-300">
-              <div className="card-body p-0">
-                <div className="px-5 py-3 border-b border-base-300 bg-base-200/30 flex items-center gap-2">
-                  <User className="w-4 h-4 text-info" />
-                  <h2 className="font-semibold text-sm">Employé concerné</h2>
-                </div>
+              <div className="px-5 py-3 border-b border-base-300 bg-base-200/30 flex items-center gap-2">
+                <User className="w-4 h-4 text-info" />
+                <h2 className="font-semibold text-sm">Employé concerné</h2>
+              </div>
 
-                <div className="p-5">
-                  <Link
-                    to={`/employes/${employe.id}`}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-base-200/50 transition-colors"
-                  >
-                    {employe.photo ? (
-                      <div className="avatar">
-                        <div className="w-14 h-14 rounded-full">
-                          <img src={employe.photo} alt={employe.nom} />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="avatar placeholder">
-                        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-lg font-bold text-primary">
-                            {employe.prenom?.charAt(0)?.toUpperCase()}
-                            {employe.nom?.charAt(0)?.toUpperCase()}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-base">
-                        {employe.prenom} {employe.nom}
-                      </p>
-                      <p className="text-xs text-base-content/50 font-mono">
-                        {employe.matricule}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        {employe.poste_nom && (
-                          <span className="badge badge-ghost badge-sm gap-1">
-                            <Briefcase className="w-3 h-3" />
-                            {employe.poste_nom}
-                          </span>
-                        )}
-                        {employe.departement_nom && (
-                          <span className="badge badge-ghost badge-sm gap-1">
-                            <Building2 className="w-3 h-3" />
-                            {employe.departement_nom}
-                          </span>
-                        )}
+              <div className="p-5">
+                <Link
+                  to={`/employes/${employe.id}`}
+                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-base-200/50 transition-colors"
+                >
+                  {employe.photo ? (
+                    <div className="avatar">
+                      <div className="w-14 h-14 rounded-full">
+                        <img src={employe.photo} alt={employe.nom} />
                       </div>
                     </div>
-                    <Eye className="w-4 h-4 text-base-content/40" />
-                  </Link>
-                </div>
+                  ) : (
+                    <div className="avatar placeholder">
+                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-lg font-bold text-primary">
+                          {employe.prenom?.charAt(0)?.toUpperCase()}
+                          {employe.nom?.charAt(0)?.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-base">{employe.prenom} {employe.nom}</p>
+                    <p className="text-xs text-base-content/50 font-mono">{employe.matricule}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {employe.poste_nom && (
+                        <span className="badge badge-ghost badge-sm gap-1">
+                          <Briefcase className="w-3 h-3" /> {employe.poste_nom}
+                        </span>
+                      )}
+                      {employe.departement_nom && (
+                        <span className="badge badge-ghost badge-sm gap-1">
+                          <Building2 className="w-3 h-3" /> {employe.departement_nom}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Eye className="w-4 h-4 text-base-content/40" />
+                </Link>
               </div>
             </div>
           )}
 
-          {/* Informations système */}
+          {/* Système */}
           <div className="card bg-base-100 shadow-sm border border-base-300">
-            <div className="card-body p-0">
-              <div className="px-5 py-3 border-b border-base-300 bg-base-200/30 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-base-content/50" />
-                <h2 className="font-semibold text-sm">Informations système</h2>
-              </div>
+            <div className="px-5 py-3 border-b border-base-300 bg-base-200/30 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-base-content/50" />
+              <h2 className="font-semibold text-sm">Informations système</h2>
+            </div>
 
-              <div className="p-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="text-xs text-base-content/40 uppercase tracking-wider">Créé le</label>
-                    <p className="font-medium mt-1 flex items-center gap-2 text-sm">
-                      <Calendar className="w-4 h-4 text-base-content/40" />
-                      {formaterDateHeure(contrat.created_at)}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs text-base-content/40 uppercase tracking-wider">Modifié le</label>
-                    <p className="font-medium mt-1 flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-base-content/40" />
-                      {formaterDateHeure(contrat.updated_at)}
-                    </p>
-                  </div>
+            <div className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-xs text-base-content/40 uppercase tracking-wider">Créé le</label>
+                  <p className="font-medium mt-1 flex items-center gap-2 text-sm">
+                    <Calendar className="w-4 h-4 text-base-content/40" />
+                    {formaterDateHeure(contrat.created_at)}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs text-base-content/40 uppercase tracking-wider">Modifié le</label>
+                  <p className="font-medium mt-1 flex items-center gap-2 text-sm">
+                    <Clock className="w-4 h-4 text-base-content/40" />
+                    {formaterDateHeure(contrat.updated_at)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -461,7 +476,6 @@ const ContratDetail = () => {
         {/* Colonne latérale */}
         <div className="lg:col-span-1 space-y-6">
 
-          {/* Carte résumé */}
           <div className="card bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 shadow-sm">
             <div className="card-body text-center">
               <div className="avatar placeholder mx-auto">
@@ -492,7 +506,6 @@ const ContratDetail = () => {
             </div>
           </div>
 
-          {/* Actions rapides */}
           <div className="card bg-base-100 shadow-sm border border-base-300">
             <div className="card-body p-4">
               <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
@@ -507,31 +520,35 @@ const ContratDetail = () => {
                     rel="noopener noreferrer"
                     className="btn btn-ghost btn-sm justify-start w-full gap-2"
                   >
-                    <Download className="w-4 h-4" />
-                    Télécharger le contrat
+                    <Download className="w-4 h-4" /> Télécharger le contrat
                   </a>
+                )}
+                {contrat.type_contrat && (
+                  <Link
+                    to={`/types-contrats/${contrat.type_contrat}`}
+                    className="btn btn-ghost btn-sm justify-start w-full gap-2"
+                  >
+                    <Layers className="w-4 h-4" /> Voir le type de contrat
+                  </Link>
                 )}
                 <button
                   className="btn btn-ghost btn-sm justify-start w-full gap-2"
                   onClick={() => window.print()}
                 >
-                  <Printer className="w-4 h-4" />
-                  Imprimer
+                  <Printer className="w-4 h-4" /> Imprimer
                 </button>
                 <Link
                   to={`/contrats/${id}/modifier`}
                   className="btn btn-ghost btn-sm justify-start w-full gap-2"
                 >
-                  <Edit className="w-4 h-4" />
-                  Modifier le contrat
+                  <Edit className="w-4 h-4" /> Modifier le contrat
                 </Link>
                 {employe && (
                   <Link
                     to={`/employes/${employe.id}`}
                     className="btn btn-ghost btn-sm justify-start w-full gap-2"
                   >
-                    <User className="w-4 h-4" />
-                    Voir la fiche employé
+                    <User className="w-4 h-4" /> Voir la fiche employé
                   </Link>
                 )}
               </div>
@@ -541,7 +558,7 @@ const ContratDetail = () => {
         </div>
       </div>
 
-      {/* Modal suppression */}
+      {/* MODAL SUPPRESSION */}
       {showModalSuppression && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowModalSuppression(false)}></div>
@@ -552,32 +569,16 @@ const ContratDetail = () => {
               </div>
               <h3 className="text-xl font-bold mb-2">Supprimer le contrat</h3>
               <p className="text-base-content/60 mb-4">
-                Êtes-vous sûr de vouloir supprimer définitivement le contrat{' '}
-                <span className="font-bold font-mono">{contrat.numero}</span> ?
+                Supprimer définitivement le contrat <span className="font-bold font-mono">{contrat.numero}</span> ?
                 <br />
                 <span className="text-error text-sm">Cette action est irréversible !</span>
               </p>
               <div className="flex gap-3">
-                <button
-                  className="btn flex-1"
-                  onClick={() => setShowModalSuppression(false)}
-                  disabled={chargementAction}
-                >
+                <button className="btn flex-1" onClick={() => setShowModalSuppression(false)} disabled={chargementAction}>
                   Annuler
                 </button>
-                <button
-                  className="btn btn-error flex-1"
-                  onClick={supprimerContrat}
-                  disabled={chargementAction}
-                >
-                  {chargementAction ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Suppression...
-                    </>
-                  ) : (
-                    'Supprimer'
-                  )}
+                <button className="btn btn-error flex-1" onClick={supprimerContrat} disabled={chargementAction}>
+                  {chargementAction ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Suppression...</> : 'Supprimer'}
                 </button>
               </div>
             </div>
