@@ -79,6 +79,59 @@ import ContratsClients from './components/clients/ContratsClients';
 import Prestations from './components/clients/Prestations';
 import PrestationForm from './components/clients/PrestationForm';
 
+
+// ============================================================
+// COMPTABILITÉ — AVOIRS / PAIEMENTS / LITIGES (COMPLET)
+// ============================================================
+import Avoirs from './components/comptabilite/Avoirs';
+import AvoirForm from './components/comptabilite/AvoirForm';
+import AvoirDetail from './components/comptabilite/AvoirDetail';
+
+import PaiementsClients from './components/comptabilite/PaiementsClients';
+import PaiementClientForm from './components/comptabilite/PaiementClientForm';
+import PaiementClientDetail from './components/comptabilite/PaiementClientDetail';
+
+import Litiges from './components/comptabilite/Litiges';
+import LitigeForm from './components/comptabilite/LitigeForm';
+import LitigeDetail from './components/comptabilite/LitigeDetail';
+
+import Lettrage from './components/comptabilite/Lettrage';
+import LettrageForm from './components/comptabilite/LettrageForm';
+
+// ============================================================
+// RECOUVREMENT & RELANCES
+// ============================================================
+import Recouvrement from './components/comptabilite/Recouvrement';
+import Relances from './components/comptabilite/Relances';
+import RelanceForm from './components/comptabilite/RelanceForm';
+import HistoriqueRelances from './components/comptabilite/HistoriqueRelances';
+
+
+
+// ============================================================
+// COMPTABILITÉ — DASHBOARD / BALANCE / GRAND LIVRE
+// ============================================================
+import DashboardComptabilite from './components/comptabilite/DashboardComptabilite';
+import Balance from './components/comptabilite/Balance';
+import GrandLivre from './components/comptabilite/GrandLivre';
+
+// ============================================================
+// COMPTABILITÉ — CLÔTURE / ÉTATS FINANCIERS / RAPPORTS
+// ============================================================
+import Cloture from './components/comptabilite/Cloture';
+
+import EtatsFinanciers from './components/comptabilite/EtatsFinanciers';
+import RapportsComptables from './components/comptabilite/RapportsComptables';
+
+// FACTURATION & RECOUVREMENT
+// ============================================================
+import FacturesRecouvrement from './components/comptabilite/FacturesRecouvrement';
+import FacturesEchues from './components/comptabilite/FacturesEchues';
+import FacturesNonEchues from './components/comptabilite/FacturesNonEchues';
+import Creances from './components/comptabilite/Creances';
+import Bilan from './components/comptabilite/Bilan';
+import CompteResultat from './components/comptabilite/CompteResultat';
+
 // Comptabilité - Plan comptable
 import ComptesComptables from './components/comptabilite/ComptesComptables';
 import CompteComptableForm from './components/comptabilite/CompteComptableForm';
@@ -163,7 +216,7 @@ function App() {
               <Route element={<ProtectedRoute />}>
              
 
-
+CompteResultat
 
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/clients/ajouter" element={<ClientForm />} />
@@ -304,6 +357,14 @@ function App() {
 <Route path="/encaissements/:id" element={<EncaissementDetail />} />
 <Route path="/encaissements/:id/modifier" element={<EncaissementForm />} />
 
+
+{/* ============================================================ */}
+{/* COMPTABILITÉ — CLÔTURE / ÉTATS / RAPPORTS                     */}
+{/* ============================================================ */}
+<Route path="/cloture" element={<Cloture />} />
+<Route path="/etats-financiers" element={<EtatsFinanciers />} />
+<Route path="/rapports-comptables" element={<RapportsComptables />} />
+
 {/* ============================================ */}
 {/* TRÉSORERIE - COMPTES BANCAIRES */}
 {/* ============================================ */}
@@ -311,6 +372,12 @@ function App() {
 <Route path="/comptes-bancaires/ajouter" element={<CompteBancaireForm />} />
 <Route path="/comptes-bancaires/:id" element={<CompteBancaireDetail />} />
 <Route path="/comptes-bancaires/:id/modifier" element={<CompteBancaireForm />} />
+
+<Route path="/lettrage" element={<Lettrage />} />
+
+<Route path="/lettrage/ajouter" element={<LettrageForm />} />
+<Route path="/lettrage/:id/modifier" element={<LettrageForm />} />
+<Route path="/bilan" element={<Bilan />} />
 
 {/* ============================================ */}
 {/* TRÉSORERIE - CAISSES */}
@@ -334,6 +401,8 @@ function App() {
 <Route path="/journaux/ajouter" element={<JournalForm />} />
 <Route path="/journaux/:id/modifier" element={<JournalForm />} />
 
+<Route path="/compte-resultat" element={<CompteResultat />} />
+
 
 {/* COMPTABILITÉ - FACTURES */}
 {/* ============================================ */}
@@ -350,6 +419,50 @@ function App() {
 <Route path="/devis/:id" element={<DevisDetail />} />
 <Route path="/devis/:id/modifier" element={<DevisForm />} />
 
+
+
+{/* ============================================================ */}
+{/* COMPTABILITÉ — AVOIRS                                         */}
+{/* ============================================================ */}
+<Route path="/avoirs" element={<Avoirs />} />
+<Route path="/avoirs/ajouter" element={<AvoirForm />} />
+<Route path="/avoirs/:id/modifier" element={<AvoirForm />} />
+<Route path="/avoirs/:id" element={<AvoirDetail />} />
+
+{/* ============================================================ */}
+{/* COMPTABILITÉ — PAIEMENTS CLIENTS                              */}
+{/* ============================================================ */}
+<Route path="/paiements-clients" element={<PaiementsClients />} />
+<Route path="/paiements-clients/ajouter" element={<PaiementClientForm />} />
+<Route path="/paiements-clients/:id/modifier" element={<PaiementClientForm />} />
+<Route path="/paiements-clients/:id" element={<PaiementClientDetail />} />
+
+{/* ============================================================ */}
+{/* COMPTABILITÉ — LITIGES                                        */}
+{/* ============================================================ */}
+<Route path="/litiges" element={<Litiges />} />
+<Route path="/litiges/ajouter" element={<LitigeForm />} />
+<Route path="/litiges/:id/modifier" element={<LitigeForm />} />
+<Route path="/litiges/:id" element={<LitigeDetail />} />
+
+{/* ============================================================ */}
+{/* FACTURATION & RECOUVREMENT                                    */}
+{/* ============================================================ */}
+<Route path="/factures-recouvrement" element={<FacturesRecouvrement />} />
+<Route path="/factures-echues" element={<FacturesEchues />} />
+<Route path="/factures-non-echues" element={<FacturesNonEchues />} />
+<Route path="/creances" element={<Creances />} />
+
+
+{/* ============================================================ */}
+{/* RECOUVREMENT & RELANCES                                       */}
+{/* ============================================================ */}
+<Route path="/recouvrement" element={<Recouvrement />} />
+<Route path="/relances" element={<Relances />} />
+<Route path="/relances/ajouter" element={<RelanceForm />} />
+<Route path="/relances/:id/modifier" element={<RelanceForm />} />
+<Route path="/historique-relances" element={<HistoriqueRelances />} />
+
 {/* ============================================ */}
 {/* COMPTABILITÉ - ÉCRITURES COMPTABLES */}
 {/* ============================================ */}
@@ -357,6 +470,13 @@ function App() {
 <Route path="/ecritures-comptables/ajouter" element={<EcritureForm />} />
 <Route path="/ecritures-comptables/:id" element={<EcritureDetail />} />
 <Route path="/ecritures-comptables/:id/modifier" element={<EcritureForm />} />
+
+{/* ============================================================ */}
+{/* COMPTABILITÉ — DASHBOARD / BALANCE / GRAND LIVRE              */}
+{/* ============================================================ */}
+<Route path="/dashboard-comptabilite" element={<DashboardComptabilite />} />
+<Route path="/balance" element={<Balance />} />
+<Route path="/grand-livre" element={<GrandLivre />} />
 
 {/* ============================================ */}
 {/* COMPTABILITÉ - DÉCLARATIONS FISCALES */}
