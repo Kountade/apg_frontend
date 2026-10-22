@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, Loader2, AlertCircle, CheckCircle, Plus,
-  TrendingUp, TrendingDown, ArrowLeftRight, Package, RefreshCw, Info
+  TrendingUp, TrendingDown, ArrowLeftRight, Package, RefreshCw, Info,
+  Eye, RotateCcw
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
@@ -11,7 +12,7 @@ const TYPES = [
   { value: 'entree', label: 'Entrée', icon: TrendingUp, color: 'success' },
   { value: 'sortie', label: 'Sortie', icon: TrendingDown, color: 'error' },
   { value: 'transfert', label: 'Transfert', icon: ArrowLeftRight, color: 'info' },
-  { value: 'ajustement', label: 'Ajustement', icon: ArrowLeft, color: 'warning' },
+  { value: 'ajustement', label: 'Ajustement', icon: RotateCcw, color: 'warning' },
 ];
 
 const MOTIFS = [
@@ -65,6 +66,7 @@ const MouvementStockForm = () => {
   // ============================================================
   useEffect(() => {
     chargerDonnees();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const chargerDonnees = async () => {
@@ -116,7 +118,6 @@ const MouvementStockForm = () => {
       ...prev,
       type: newType,
       motif: premierMotif,
-      // Réinitialiser les magasins selon le type
       magasin_source: newType === 'entree' ? '' : prev.magasin_source,
       magasin_destination: newType === 'sortie' ? '' : prev.magasin_destination,
     }));
