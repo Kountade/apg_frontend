@@ -189,6 +189,23 @@ import HistoriquePaie from './components/paie/HistoriquePaie';
 import ArchivesPaie from './components/paie/ArchivesPaie';
 import RapportsPaie from './components/paie/RapportsPaie';
 import DashboardPaie from './components/paie/DashboardPaie';
+import DashboardStocks from './components/stocks/DashboardStocks';
+import CategorieArticleForm from './components/stocks/CategorieArticleForm';
+import CategoriesArticles from './components/stocks/CategoriesArticles';
+import Magasins from './components/stocks/Magasins';
+import MagasinForm from './components/stocks/MagasinForm';
+import Articles from './components/stocks/Articles';
+import ArticleForm from './components/stocks/ArticleForm';
+import ArticleDetail from './components/stocks/ArticleDetail';
+import StockCritique from './components/stocks/StockCritique';
+
+import Equipements from './components/stocks/Equipements';
+import EquipementForm from './components/stocks/EquipementForm';
+import EquipementDetail from './components/stocks/EquipementDetail';
+
+import MouvementsStock from './components/stocks/MouvementsStock';
+import MouvementStockForm from './components/stocks/MouvementStockForm';
+
 function App() {
   const location = useLocation();
 
@@ -216,7 +233,35 @@ function App() {
               <Route element={<ProtectedRoute />}>
              
 
-CompteResultat
+{/* Dashboard */}
+<Route path="/dashboard-stocks" element={<DashboardStocks />} />
+
+
+
+{/* STOCKS — Mouvements */}
+<Route path="/mouvements-stock" element={<MouvementsStock />} />
+<Route path="/mouvements-stock/ajouter" element={<MouvementStockForm />} />
+{/* STOCKS — Équipements */}
+<Route path="/equipements" element={<Equipements />} />
+<Route path="/equipements/ajouter" element={<EquipementForm />} />
+<Route path="/equipements/:id/modifier" element={<EquipementForm />} />
+<Route path="/equipements/:id" element={<EquipementDetail />} />
+
+<Route path="/stock-critique" element={<StockCritique />} />
+{/* STOCKS — Articles */}
+<Route path="/articles" element={<Articles />} />
+<Route path="/articles/ajouter" element={<ArticleForm />} />
+<Route path="/articles/:id/modifier" element={<ArticleForm />} />
+<Route path="/articles/:id" element={<ArticleDetail />} />
+
+{/* STOCKS — Magasins */}
+<Route path="/magasins" element={<Magasins />} />
+<Route path="/magasins/ajouter" element={<MagasinForm />} />
+<Route path="/magasins/:id/modifier" element={<MagasinForm />} />
+{/* STOCKS — Catégories */}
+<Route path="/categories-articles" element={<CategoriesArticles />} />
+<Route path="/categories-articles/ajouter" element={<CategorieArticleForm />} />
+<Route path="/categories-articles/:id/modifier" element={<CategorieArticleForm />} />
 
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/clients/ajouter" element={<ClientForm />} />
