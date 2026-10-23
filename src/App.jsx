@@ -266,8 +266,13 @@ import Incidents from './components/exploitation/Incidents';
 import IncidentForm from './components/exploitation/IncidentForm';
 import IncidentDetail from './components/exploitation/IncidentDetail';
 
+import Tricycles from './components/vehicules/Tricycles';
+import TricycleForm from './components/vehicules/TricycleForm';
+import TricycleDetail from './components/vehicules/TricycleDetail';
 
-
+import Vehicules from './components/vehicules/Vehicules';
+import VehiculeForm from './components/vehicules/VehiculeForm';
+import VehiculeDetail from './components/vehicules/VehiculeDetail';
 
 function App() {
   const location = useLocation();
@@ -298,6 +303,17 @@ function App() {
 
 
 
+
+
+<Route path="/vehicules" element={<Vehicules />} />
+<Route path="/vehicules/ajouter" element={<VehiculeForm />} />
+<Route path="/vehicules/:id/modifier" element={<VehiculeForm />} />
+<Route path="/vehicules/:id" element={<VehiculeDetail />} />
+
+<Route path="/tricycles" element={<Tricycles />} />
+<Route path="/tricycles/ajouter" element={<TricycleForm />} />
+<Route path="/tricycles/:id/modifier" element={<TricycleForm />} />
+<Route path="/tricycles/:id" element={<TricycleDetail />} />
 
 <Route path="/incidents" element={<Incidents />} />
 <Route path="/incidents/ajouter" element={<IncidentForm />} />
