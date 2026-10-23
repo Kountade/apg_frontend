@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ClipboardList, Search, Plus, Eye, Loader2, AlertCircle,
-  RefreshCw, Filter, CheckCircle, XCircle, Clock, Calendar
+  RefreshCw, Filter, CheckCircle, XCircle, Clock
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 
@@ -112,7 +112,7 @@ const Inventaire = () => {
           <button onClick={charger} className="btn btn-ghost btn-sm gap-2">
             <RefreshCw className="w-4 h-4" /> Rafraîchir
           </button>
-          <Link to="/inventaires/ajouter" className="btn btn-primary gap-2">
+          <Link to="/inventaire/ajouter" className="btn btn-primary gap-2">
             <Plus className="w-5 h-5" /> Nouvel inventaire
           </Link>
         </div>
@@ -180,7 +180,7 @@ const Inventaire = () => {
           <p className="text-xl text-base-content/60">
             {filtresActifs ? 'Aucun inventaire ne correspond' : 'Aucun inventaire'}
           </p>
-          <Link to="/inventaires/ajouter" className="btn btn-primary mt-4">
+          <Link to="/inventaire/ajouter" className="btn btn-primary mt-4">
             Créer un inventaire
           </Link>
         </div>
@@ -238,7 +238,7 @@ const Inventaire = () => {
                     <td>
                       <div className="flex justify-end gap-1">
                         <Link
-                          to={`/inventaires/${i.id}`}
+                          to={`/inventaire/${i.id}`}
                           className="btn btn-ghost btn-xs"
                           title="Voir / Valider"
                         >

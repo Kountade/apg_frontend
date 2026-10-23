@@ -206,6 +206,69 @@ import EquipementDetail from './components/stocks/EquipementDetail';
 import MouvementsStock from './components/stocks/MouvementsStock';
 import MouvementStockForm from './components/stocks/MouvementStockForm';
 
+import Affectations from './components/stocks/Affectations';
+import AffectationForm from './components/stocks/AffectationForm';
+import AffectationDetail from './components/stocks/AffectationDetail';
+
+import Maintenances from './components/stocks/Maintenances';
+import MaintenanceForm from './components/stocks/MaintenanceForm';
+import MaintenanceDetail from './components/stocks/MaintenanceDetail';
+import RapportsStocks from './components/stocks/RapportsStocks';
+import Inventaire from './components/stocks/Inventaire';
+import InventaireForm from './components/stocks/InventaireForm';
+import InventaireDetail from './components/stocks/InventaireDetail';
+import Fournisseurs from './components/achats/Fournisseurs';
+import FournisseurForm from './components/achats/FournisseurForm';
+import FournisseurDetail from './components/achats/FournisseurDetail';
+
+import DemandesAchat from './components/achats/DemandesAchat';
+import DemandeAchatForm from './components/achats/DemandeAchatForm';
+import DemandeAchatDetail from './components/achats/DemandeAchatDetail';
+import ValidationDemandes from './components/achats/ValidationDemandes';
+
+import DevisFournisseurs from './components/achats/DevisFournisseurs';
+import DevisFournisseurForm from './components/achats/DevisFournisseurForm';
+import DevisFournisseurDetail from './components/achats/DevisFournisseurDetail';
+
+import BonsCommande from './components/achats/BonsCommande';
+import BonCommandeForm from './components/achats/BonCommandeForm';
+import BonCommandeDetail from './components/achats/BonCommandeDetail';
+import Receptions from './components/achats/Receptions';
+import ReceptionForm from './components/achats/ReceptionForm';
+import ReceptionDetail from './components/achats/ReceptionDetail';
+
+import FacturesFournisseurs from './components/achats/FacturesFournisseurs';
+import FactureFournisseurForm from './components/achats/FactureFournisseurForm';
+import FactureFournisseurDetail from './components/achats/FactureFournisseurDetail';
+import PaiementsFournisseurs from './components/achats/PaiementsFournisseurs';
+import PaiementFournisseurForm from './components/achats/PaiementFournisseurForm';
+import PaiementFournisseurDetail from './components/achats/PaiementFournisseurDetail';
+
+import Equipes from './components/exploitation/Equipes';
+import EquipeForm from './components/exploitation/EquipeForm';
+import EquipeDetail from './components/exploitation/EquipeDetail';
+
+import Missions from './components/exploitation/Missions';
+import MissionForm from './components/exploitation/MissionForm';
+import MissionDetail from './components/exploitation/MissionDetail';
+import HistoriqueMissions from './components/exploitation/HistoriqueMissions';
+
+import PresencesTerrain from './components/exploitation/PresencesTerrain';
+import PresenceTerrainForm from './components/exploitation/PresenceTerrainForm';
+import PresenceTerrainDetail from './components/exploitation/PresenceTerrainDetail';
+import PointageTerrain from './components/exploitation/PointageTerrain';
+
+import ActivitesTerrain from './components/exploitation/ActivitesTerrain';
+import ActiviteTerrainForm from './components/exploitation/ActiviteTerrainForm';
+import ActiviteTerrainDetail from './components/exploitation/ActiviteTerrainDetail';
+
+import Incidents from './components/exploitation/Incidents';
+import IncidentForm from './components/exploitation/IncidentForm';
+import IncidentDetail from './components/exploitation/IncidentDetail';
+
+
+
+
 function App() {
   const location = useLocation();
 
@@ -233,11 +296,88 @@ function App() {
               <Route element={<ProtectedRoute />}>
              
 
+
+
+
+<Route path="/incidents" element={<Incidents />} />
+<Route path="/incidents/ajouter" element={<IncidentForm />} />
+<Route path="/incidents/:id/modifier" element={<IncidentForm />} />
+<Route path="/incidents/:id" element={<IncidentDetail />} />
+<Route path="/activites-terrain" element={<ActivitesTerrain />} />
+<Route path="/activites-terrain/ajouter" element={<ActiviteTerrainForm />} />
+<Route path="/activites-terrain/:id/modifier" element={<ActiviteTerrainForm />} />
+<Route path="/activites-terrain/:id" element={<ActiviteTerrainDetail />} />
+
+<Route path="/pointage-terrain" element={<PointageTerrain />} />
+<Route path="/presences-terrain" element={<PresencesTerrain />} />
+<Route path="/presences-terrain/ajouter" element={<PresenceTerrainForm />} />
+<Route path="/presences-terrain/:id/modifier" element={<PresenceTerrainForm />} />
+<Route path="/presences-terrain/:id" element={<PresenceTerrainDetail />} />
+
+<Route path="/historique-missions" element={<HistoriqueMissions />} />
+<Route path="/missions" element={<Missions />} />
+<Route path="/missions/ajouter" element={<MissionForm />} />
+<Route path="/missions/:id/modifier" element={<MissionForm />} />
+<Route path="/missions/:id" element={<MissionDetail />} />
+
+<Route path="/equipes" element={<Equipes />} />
+<Route path="/equipes/ajouter" element={<EquipeForm />} />
+<Route path="/equipes/:id/modifier" element={<EquipeForm />} />
+<Route path="/equipes/:id" element={<EquipeDetail />} />
+
+<Route path="/paiements-fournisseurs" element={<PaiementsFournisseurs />} />
+<Route path="/paiements-fournisseurs/ajouter" element={<PaiementFournisseurForm />} />
+<Route path="/paiements-fournisseurs/:id/modifier" element={<PaiementFournisseurForm />} />
+<Route path="/paiements-fournisseurs/:id" element={<PaiementFournisseurDetail />} />
+
+<Route path="/factures-fournisseurs" element={<FacturesFournisseurs />} />
+<Route path="/factures-fournisseurs/ajouter" element={<FactureFournisseurForm />} />
+<Route path="/factures-fournisseurs/:id/modifier" element={<FactureFournisseurForm />} />
+<Route path="/factures-fournisseurs/:id" element={<FactureFournisseurDetail />} />
+
+
+<Route path="/receptions" element={<Receptions />} />
+<Route path="/receptions/ajouter" element={<ReceptionForm />} />
+<Route path="/receptions/:id/modifier" element={<ReceptionForm />} />
+<Route path="/receptions/:id" element={<ReceptionDetail />} />
+
+<Route path="/bons-commande" element={<BonsCommande />} />
+<Route path="/bons-commande/ajouter" element={<BonCommandeForm />} />
+<Route path="/bons-commande/:id/modifier" element={<BonCommandeForm />} />
+<Route path="/bons-commande/:id" element={<BonCommandeDetail />} />
+
+<Route path="/devis-fournisseurs" element={<DevisFournisseurs />} />
+<Route path="/devis-fournisseurs/ajouter" element={<DevisFournisseurForm />} />
+<Route path="/devis-fournisseurs/:id/modifier" element={<DevisFournisseurForm />} />
+<Route path="/devis-fournisseurs/:id" element={<DevisFournisseurDetail />} />
+
+<Route path="/validation-demandes" element={<ValidationDemandes />} />
+<Route path="/demandes-achat" element={<DemandesAchat />} />
+<Route path="/demandes-achat/ajouter" element={<DemandeAchatForm />} />
+<Route path="/demandes-achat/:id/modifier" element={<DemandeAchatForm />} />
+<Route path="/demandes-achat/:id" element={<DemandeAchatDetail />} />
+
+<Route path="/fournisseurs" element={<Fournisseurs />} />
+<Route path="/fournisseurs/ajouter" element={<FournisseurForm />} />
+<Route path="/fournisseurs/:id/modifier" element={<FournisseurForm />} />
+<Route path="/fournisseurs/:id" element={<FournisseurDetail />} />
+
+
 {/* Dashboard */}
 <Route path="/dashboard-stocks" element={<DashboardStocks />} />
+<Route path="/inventaire" element={<Inventaire />} />
+<Route path="/inventaire/ajouter" element={<InventaireForm />} />
+<Route path="/inventaire/:id" element={<InventaireDetail />} />
+<Route path="/inventaire/:id/modifier" element={<InventaireForm />} />
 
+<Route path="/rapports-stocks" element={<RapportsStocks />} />
+<Route path="/maintenances" element={<Maintenances />} />
+<Route path="/maintenances/ajouter" element={<MaintenanceForm />} />
+<Route path="/maintenances/:id" element={<MaintenanceDetail />} />
 
-
+<Route path="/affectations" element={<Affectations />} />
+<Route path="/affectations/ajouter" element={<AffectationForm />} />
+<Route path="/affectations/:id" element={<AffectationDetail />} />
 {/* STOCKS — Mouvements */}
 <Route path="/mouvements-stock" element={<MouvementsStock />} />
 <Route path="/mouvements-stock/ajouter" element={<MouvementStockForm />} />

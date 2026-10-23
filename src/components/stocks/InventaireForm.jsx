@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  ArrowLeft, Save, Loader2, AlertCircle, CheckCircle, Plus,
+  ArrowLeft, Save, Loader2, AlertCircle, CheckCircle,
   ClipboardList, Warehouse, RefreshCw, Info, Eye
 } from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
@@ -20,18 +20,13 @@ const InventaireForm = () => {
   const [succes, setSucces] = useState(false);
 
   const [magasins, setMagasins] = useState([]);
-
   const [formData, setFormData] = useState({
     reference: '',
     magasin: '',
     notes: '',
   });
-
   const [lignes, setLignes] = useState([]);
 
-  // ============================================================
-  // CHARGEMENT INITIAL
-  // ============================================================
   useEffect(() => {
     chargerMagasins();
     if (estEdition) {
@@ -93,7 +88,7 @@ const InventaireForm = () => {
   };
 
   // ============================================================
-  // CHARGER LES ARTICLES DU MAGASIN — VERSION OPTIMISÉE (2 requêtes)
+  // CHARGER LES ARTICLES — OPTIMISÉ (2 requêtes)
   // ============================================================
   const chargerArticlesDuMagasin = async (magasinId) => {
     if (!magasinId) {
@@ -132,13 +127,9 @@ const InventaireForm = () => {
     }
   };
 
-  // ============================================================
-  // HANDLERS
-  // ============================================================
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-
     if (name === 'magasin') {
       chargerArticlesDuMagasin(value);
     }
@@ -152,15 +143,11 @@ const InventaireForm = () => {
     });
   };
 
-  const ecartLigne = (ligne) => {
-    return Number(ligne.quantite_comptee || 0) - Number(ligne.quantite_theorique || 0);
-  };
+  const ecartLigne = (ligne) =>
+    Number(ligne.quantite_comptee || 0) - Number(ligne.quantite_theorique || 0);
 
   const totalEcarts = lignes.filter(l => ecartLigne(l) !== 0).length;
 
-  // ============================================================
-  // SUBMIT
-  // ============================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setChargement(true);
@@ -173,7 +160,7 @@ const InventaireForm = () => {
       return;
     }
     if (lignes.length === 0) {
-      setErreur('Aucune ligne à enregistrer. Sélectionnez un magasin avec des articles.');
+      setErreur('Aucune ligne à enregistrer.');
       setChargement(false);
       return;
     }
@@ -192,7 +179,7 @@ const InventaireForm = () => {
           }
         }
         setSucces(true);
-        setTimeout(() => navigate(`/inventaires/${id}`), 1200);
+        setTimeout(() => navigate(`/inventaire/${id}`), 1200);
       } else {
         const invRes = await AxiosInstance.post('/inventaires/', {
           reference: formData.reference,
@@ -212,7 +199,7 @@ const InventaireForm = () => {
         }
 
         setSucces(true);
-        setTimeout(() => navigate(`/inventaires/${inventaireId}`), 1200);
+        setTimeout(() => navigate(`/inventaire/${inventaireId}`), 1200);
       }
     } catch (err) {
       if (err.response?.data) {
@@ -226,9 +213,6 @@ const InventaireForm = () => {
     }
   };
 
-  // ============================================================
-  // RENDU
-  // ============================================================
   if (chargementInitial) {
     return (
       <div className="flex items-center justify-center py-20 w-full">
@@ -243,7 +227,7 @@ const InventaireForm = () => {
       <div className="w-full sticky top-0 z-20 bg-base-100 border-b border-base-300 shadow-sm">
         <div className="flex items-center gap-4 px-6 py-3">
           <button
-            onClick={() => navigate('/inventaires')}
+            onClick={() => navigate('/inventaire')}
             className="btn btn-ghost btn-sm btn-circle"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -261,7 +245,6 @@ const InventaireForm = () => {
         </div>
       </div>
 
-      {/* ALERTES */}
       {succes && (
         <div className="w-full alert alert-success rounded-none py-2">
           <CheckCircle className="w-5 h-5" />
@@ -359,7 +342,7 @@ const InventaireForm = () => {
               </div>
             </div>
 
-            {/* Lignes d'inventaire */}
+            {/* Lignes */}
             <div className="card bg-base-100 shadow-sm border border-base-300">
               <div className="card-body p-0">
                 <div className="px-5 py-3 border-b bg-base-200/30 flex items-center justify-between">
@@ -427,11 +410,7 @@ const InventaireForm = () => {
                                     className="input input-bordered input-xs w-24 text-right font-mono"
                                     value={ligne.quantite_comptee}
                                     onChange={(e) =>
-                                      handleLigneChange(
-                                        index,
-                                        'quantite_comptee',
-                                        e.target.value
-                                      )
+                                      handleLigneChange(index, 'quantite_comptee', e.target.value)
                                     }
                                     min="0"
                                     step="0.01"
@@ -456,11 +435,7 @@ const InventaireForm = () => {
                                     className="input input-bordered input-xs w-full"
                                     value={ligne.observation}
                                     onChange={(e) =>
-                                      handleLigneChange(
-                                        index,
-                                        'observation',
-                                        e.target.value
-                                      )
+                                      handleLigneChange(index, 'observation', e.target.value)
                                     }
                                     placeholder="—"
                                   />
@@ -531,7 +506,7 @@ const InventaireForm = () => {
           <div className="flex items-center justify-end gap-3 px-6 py-3">
             <button
               type="button"
-              onClick={() => navigate('/inventaires')}
+              onClick={() => navigate('/inventaire')}
               className="btn btn-ghost"
               disabled={chargement}
             >

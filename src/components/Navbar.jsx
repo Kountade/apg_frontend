@@ -17,7 +17,8 @@ import {
   FolderOpen, Folder, FileSearch, Lock, Key, Target, Layers, Star, Hash,
   FileSignature, QrCode, Fingerprint, ArrowLeftRight, ArrowUpRight,
   ArrowDownRight, HandCoins, FileMinus, FileClock, Boxes, Tags,
-  Store, Hotel, School
+  Store, Hotel, School,
+  Wrench  // ✅ AJOUTÉ pour Maintenances Équipements
 } from 'lucide-react';
 
 import axiosInstance from './AxiosInstance';
@@ -62,7 +63,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     'COMPTABILITÉ': false,
     'LOGISTIQUE & STOCKS': false,
     'TRICYCLES & VÉHICULES': false,
-    'CARBURANT & MAINTENANCE': false,
+    'CARBURANT': false,  // ✅ était 'CARBURANT & MAINTENANCE'
     'EXPLOITATION / MISSIONS': false,
     'FOURNISSEURS & ACHATS': false,
     'DOCUMENTS': false,
@@ -329,36 +330,23 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       name: 'PAIE',
       icon: Wallet,
       items: [
-        // ----- Dashboard -----
         { id: 'dashboard-paie', text: 'Tableau de Bord Paie', icon: Gauge, path: '/dashboard-paie', permission: isPDG || isRH || isComptable },
         { id: 'separator-paie-dash', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
-
-        // ----- Périodes de paie -----
         { id: 'paie-periodes', text: 'Périodes de Paie', icon: CalendarDays, path: '/paie-periodes', permission: isPDG || isRH || isComptable, badge: paieEnAttente },
         { id: 'nouvelle-periode-paie', text: 'Nouvelle Période', icon: PlusCircle, path: '/paie-periodes/ajouter', permission: isPDG || isRH },
         { id: 'separator-paie-1', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
-
-        // ----- Bulletins de paie -----
         { id: 'paie-bulletins', text: 'Bulletins de Paie', icon: Receipt, path: '/paie-bulletins', permission: isPDG || isRH || isComptable },
         { id: 'separator-paie-2', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
-
-        // ----- Primes & Retenues -----
         { id: 'primes', text: 'Primes & Indemnités', icon: DollarSign, path: '/primes', permission: isPDG || isRH },
         { id: 'nouvelle-prime', text: 'Nouvelle Prime', icon: PlusCircle, path: '/primes/ajouter', permission: isPDG || isRH },
         { id: 'retenues', text: 'Retenues', icon: FileMinus, path: '/retenues', permission: isPDG || isRH || isComptable },
         { id: 'nouvelle-retenue', text: 'Nouvelle Retenue', icon: PlusCircle, path: '/retenues/ajouter', permission: isPDG || isRH },
         { id: 'separator-paie-3', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
-
-        // ----- Avances sur salaire -----
         { id: 'avances-salaire', text: 'Avances sur Salaire', icon: HandCoins, path: '/avances-salaire', permission: isPDG || isRH || isComptable },
         { id: 'nouvelle-avance', text: 'Nouvelle Avance', icon: PlusCircle, path: '/avances-salaire/ajouter', permission: isPDG || isRH || isComptable },
         { id: 'separator-paie-4', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
-
-        // ----- Fiches de paie -----
         { id: 'fiches-paie', text: 'Fiches de Paie', icon: FileText, path: '/fiches-paie', permission: isPDG || isRH || isComptable },
         { id: 'separator-paie-5', text: '', icon: null, path: '#', permission: isPDG || isRH || isComptable, separator: true },
-
-        // ----- Rapports & Historique -----
         { id: 'historique-paie', text: 'Historique Paie', icon: History, path: '/historique-paie', permission: isPDG || isRH || isComptable },
         { id: 'archives-paie', text: 'Archives Paie', icon: Archive, path: '/archives-paie', permission: isPDG || isComptable },
         { id: 'rapports-paie', text: 'Rapports Paie', icon: FileSpreadsheet, path: '/rapports-paie', permission: isPDG || isRH || isComptable }
@@ -383,16 +371,13 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'clients-commerces', text: 'Commerces', icon: Store, path: '/clients-commerces', permission: isPDG || isComptable },
         { id: 'clients-hotels', text: 'Hôtels', icon: Hotel, path: '/clients-hotels', permission: isPDG || isComptable },
         { id: 'separator-clients-1', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
-
         { id: 'prestations', text: 'Prestations', icon: Briefcase, path: '/prestations', permission: isPDG || isComptable },
         { id: 'nouvelle-prestation', text: 'Nouvelle Prestation', icon: FilePlus, path: '/prestations/ajouter', permission: isPDG || isComptable },
         { id: 'separator-prestations-1', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
-
         { id: 'contrats-clients', text: 'Contrats Clients', icon: FileSignature, path: '/contrats-clients', permission: isPDG || isComptable, badge: contratsExpirant },
         { id: 'nouveau-contrat-client', text: 'Nouveau Contrat', icon: FilePlus, path: '/contrats-clients/ajouter', permission: isPDG || isComptable },
         { id: 'contrats-expirant-clients', text: 'Contrats Expirants', icon: CalendarClock, path: '/contrats-clients/expirant', permission: isPDG || isComptable, badge: contratsExpirant },
         { id: 'separator-clients-2', text: '', icon: null, path: '#', permission: isPDG || isComptable, separator: true },
-
         { id: 'devis', text: 'Devis', icon: FileText, path: '/devis', permission: isPDG || isComptable },
         { id: 'nouveau-devis', text: 'Nouveau Devis', icon: FilePlus, path: '/devis/ajouter', permission: isPDG || isComptable },
         { id: 'factures', text: 'Factures', icon: Receipt, path: '/factures', permission: isPDG || isComptable, badge: facturesImpayees },
@@ -483,7 +468,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     },
 
     // ========================================================
-    // LOGISTIQUE & STOCKS
+    // LOGISTIQUE & STOCKS  ← ✅ MAINTENANCES ÉQUIPEMENTS ICI
     // ========================================================
     {
       name: 'LOGISTIQUE & STOCKS',
@@ -510,6 +495,11 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'nouvel-equipement', text: 'Nouvel Équipement', icon: PlusCircle, path: '/equipements/ajouter', permission: isPDG || isLogistique },
         { id: 'affectations', text: 'Affectations', icon: UserCheck, path: '/affectations', permission: isPDG || isLogistique },
         { id: 'nouvelle-affectation', text: 'Nouvelle Affectation', icon: PlusCircle, path: '/affectations/ajouter', permission: isPDG || isLogistique },
+
+        // ✅ AJOUT — Module Maintenances Équipements (8.3)
+        { id: 'maintenances', text: 'Maintenances Équipements', icon: Wrench, path: '/maintenances', permission: isPDG || isLogistique, badge: tricyclesEnMaintenance },
+        { id: 'nouvelle-maintenance', text: 'Nouvelle Maintenance', icon: PlusCircle, path: '/maintenances/ajouter', permission: isPDG || isLogistique },
+
         { id: 'rapports-stocks', text: 'Rapports Stocks', icon: FileSpreadsheet, path: '/rapports-stocks', permission: isPDG || isLogistique }
       ]
     },
@@ -541,10 +531,10 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     },
 
     // ========================================================
-    // CARBURANT & MAINTENANCE
+    // CARBURANT  ← ✅ Renommé (plus de "& MAINTENANCE")
     // ========================================================
     {
-      name: 'CARBURANT & MAINTENANCE',
+      name: 'CARBURANT',
       icon: Droplet,
       items: [
         { id: 'carburant', text: 'Carburant', icon: Droplet, path: '/carburant', permission: isPDG || isLogistique, badge: carburantAlerte },
@@ -552,11 +542,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'suivi-carburant', text: 'Suivi Consommation', icon: TrendingUp, path: '/suivi-carburant', permission: isPDG || isLogistique },
         { id: 'alertes-carburant', text: 'Alertes Carburant', icon: AlertTriangle, path: '/alertes-carburant', permission: isPDG || isLogistique, badge: carburantAlerte },
         { id: 'separator-carburant-1', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
-        { id: 'maintenance', text: 'Maintenance', icon: Cog, path: '/maintenance', permission: isPDG || isLogistique, badge: tricyclesEnMaintenance },
-        { id: 'nouvelle-maintenance', text: 'Nouvelle Intervention', icon: PlusCircle, path: '/maintenance/ajouter', permission: isPDG || isLogistique },
-        { id: 'planning-maintenance', text: 'Planning Maintenance', icon: CalendarClock, path: '/planning-maintenance', permission: isPDG || isLogistique },
-        { id: 'historique-maintenance', text: 'Historique Maintenance', icon: History, path: '/historique-maintenance', permission: isPDG || isLogistique },
-        { id: 'separator-carburant-2', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'pieces-detachees', text: 'Pièces Détachées', icon: Package, path: '/pieces-detachees', permission: isPDG || isLogistique },
         { id: 'nouvelle-piece-detachee', text: 'Nouvelle Pièce', icon: PlusCircle, path: '/pieces-detachees/ajouter', permission: isPDG || isLogistique },
         { id: 'rapports-carburant', text: 'Rapports Carburant', icon: FileSpreadsheet, path: '/rapports-carburant', permission: isPDG || isLogistique }
@@ -772,9 +757,9 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       case 'CLIENTS & CONTRATS': return contratsExpirant + facturesImpayees;
       case 'FACTURATION & RECOUVREMENT': return facturesImpayees;
       case 'TRÉSORERIE': return depensesEnAttente;
-      case 'LOGISTIQUE & STOCKS': return stockCritique;
+      case 'LOGISTIQUE & STOCKS': return stockCritique + tricyclesEnMaintenance;  // ✅ ajouté
       case 'TRICYCLES & VÉHICULES': return tricyclesEnMaintenance;
-      case 'CARBURANT & MAINTENANCE': return carburantAlerte + tricyclesEnMaintenance;
+      case 'CARBURANT': return carburantAlerte;  // ✅ renommé + retiré tricyclesEnMaintenance
       case 'EXPLOITATION / MISSIONS': return missionsEnCours;
       case 'FOURNISSEURS & ACHATS': return validationsEnAttente;
       case 'ALERTES': return notificationsCount;
