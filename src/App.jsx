@@ -274,6 +274,35 @@ import Vehicules from './components/vehicules/Vehicules';
 import VehiculeForm from './components/vehicules/VehiculeForm';
 import VehiculeDetail from './components/vehicules/VehiculeDetail';
 
+import Conducteurs from './components/vehicules/Conducteurs';
+import ConducteurForm from './components/vehicules/ConducteurForm';
+import Carburant from './components/vehicules/Carburant';
+import CarburantForm from './components/vehicules/CarburantForm';
+
+import Assurances from './components/vehicules/Assurances';
+import AssuranceForm from './components/vehicules/AssuranceForm'
+
+import Documents from './components/documents/Documents';
+import DocumentForm from './components/documents/DocumentForm';
+import DocumentDetail from './components/documents/DocumentDetail';
+
+import CategoriesDocuments from './components/documents/CategoriesDocuments';
+import CategorieDocumentForm from './components/documents/CategorieDocumentForm';
+import Alertes from './components/alertes/Alertes';
+
+import AlertesRH from './components/alertes/AlertesRH';
+import AlertesFinance from './components/alertes/AlertesFinance';
+import AlertesLogistique from './components/alertes/AlertesLogistique';
+import AlertesVehicules from './components/alertes/AlertesVehicules';
+import AlertesExploitation from './components/alertes/AlertesExploitation';
+import ConfigAlertes from './components/alertes/ConfigAlertes';
+import CanauxNotification from './components/alertes/CanauxNotification';
+
+
+
+
+
+
 function App() {
   const location = useLocation();
 
@@ -304,6 +333,39 @@ function App() {
 
 
 
+<Route path="/config-alertes" element={<ConfigAlertes />} />
+<Route path="/canaux-notification" element={<CanauxNotification />} />
+
+
+<Route path="/alertes-rh" element={<AlertesRH />} />
+<Route path="/alertes-finance" element={<AlertesFinance />} />
+<Route path="/alertes-logistique" element={<AlertesLogistique />} />
+<Route path="/alertes-vehicules" element={<AlertesVehicules />} />
+<Route path="/alertes-exploitation" element={<AlertesExploitation />} />
+
+<Route path="/alertes" element={<Alertes />} />
+<Route path="/categories-documents" element={<CategoriesDocuments />} />
+<Route path="/categories-documents/ajouter" element={<CategorieDocumentForm />} />
+<Route path="/categories-documents/:id/modifier" element={<CategorieDocumentForm />} />
+            
+<Route path="/documents" element={<Documents />} />
+<Route path="/documents/ajouter" element={<DocumentForm />} />
+<Route path="/documents/:id/modifier" element={<DocumentForm />} />
+<Route path="/documents/:id" element={<DocumentDetail />} />
+
+
+<Route path="/assurances" element={<Assurances />} />
+<Route path="/assurances/ajouter" element={<AssuranceForm />} />
+<Route path="/assurances/:id/modifier" element={<AssuranceForm />} />
+
+
+<Route path="/carburant" element={<Carburant />} />
+<Route path="/carburant/ajouter" element={<CarburantForm />} />
+<Route path="/carburant/:id/modifier" element={<CarburantForm />} />
+
+<Route path="/conducteurs" element={<Conducteurs />} />
+<Route path="/conducteurs/ajouter" element={<ConducteurForm />} />
+<Route path="/conducteurs/:id/modifier" element={<ConducteurForm />} />
 
 <Route path="/vehicules" element={<Vehicules />} />
 <Route path="/vehicules/ajouter" element={<VehiculeForm />} />

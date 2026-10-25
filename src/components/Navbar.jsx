@@ -18,7 +18,7 @@ import {
   FileSignature, QrCode, Fingerprint, ArrowLeftRight, ArrowUpRight,
   ArrowDownRight, HandCoins, FileMinus, FileClock, Boxes, Tags,
   Store, Hotel, School,
-  Wrench  // ✅ AJOUTÉ pour Maintenances Équipements
+  Wrench, Car
 } from 'lucide-react';
 
 import axiosInstance from './AxiosInstance';
@@ -63,7 +63,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     'COMPTABILITÉ': false,
     'LOGISTIQUE & STOCKS': false,
     'TRICYCLES & VÉHICULES': false,
-    'CARBURANT': false,  // ✅ était 'CARBURANT & MAINTENANCE'
+    'CARBURANT': false,
     'EXPLOITATION / MISSIONS': false,
     'FOURNISSEURS & ACHATS': false,
     'DOCUMENTS': false,
@@ -91,6 +91,8 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   const [validationsEnAttente, setValidationsEnAttente] = useState(0);
   const [depensesEnAttente, setDepensesEnAttente] = useState(0);
   const [carburantAlerte, setCarburantAlerte] = useState(0);
+  const [assurancesExpirant, setAssurancesExpirant] = useState(0);
+  const [documentsExpirant, setDocumentsExpirant] = useState(0);
 
   // ============================================================
   // UTILISATEUR
@@ -199,6 +201,8 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         safeGet('/validations/en-attente/', setValidationsEnAttente);
         safeGet('/depenses/en-attente/', setDepensesEnAttente);
         safeGet('/carburant/alertes/', setCarburantAlerte);
+        safeGet('/assurances/qui_expirent/', setAssurancesExpirant);
+        safeGet('/documents/expirent/', setDocumentsExpirant);  // ✅ AJOUTÉ
         safeGet('/notifications/non-lues/', setNotificationsCount);
       }
     };
@@ -324,7 +328,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     },
 
     // ========================================================
-    // PAIE — VERSION ALIGNÉE
+    // PAIE
     // ========================================================
     {
       name: 'PAIE',
@@ -468,7 +472,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     },
 
     // ========================================================
-    // LOGISTIQUE & STOCKS  ← ✅ MAINTENANCES ÉQUIPEMENTS ICI
+    // LOGISTIQUE & STOCKS
     // ========================================================
     {
       name: 'LOGISTIQUE & STOCKS',
@@ -495,11 +499,8 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'nouvel-equipement', text: 'Nouvel Équipement', icon: PlusCircle, path: '/equipements/ajouter', permission: isPDG || isLogistique },
         { id: 'affectations', text: 'Affectations', icon: UserCheck, path: '/affectations', permission: isPDG || isLogistique },
         { id: 'nouvelle-affectation', text: 'Nouvelle Affectation', icon: PlusCircle, path: '/affectations/ajouter', permission: isPDG || isLogistique },
-
-        // ✅ AJOUT — Module Maintenances Équipements (8.3)
         { id: 'maintenances', text: 'Maintenances Équipements', icon: Wrench, path: '/maintenances', permission: isPDG || isLogistique, badge: tricyclesEnMaintenance },
         { id: 'nouvelle-maintenance', text: 'Nouvelle Maintenance', icon: PlusCircle, path: '/maintenances/ajouter', permission: isPDG || isLogistique },
-
         { id: 'rapports-stocks', text: 'Rapports Stocks', icon: FileSpreadsheet, path: '/rapports-stocks', permission: isPDG || isLogistique }
       ]
     },
@@ -513,38 +514,26 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       items: [
         { id: 'tricycles', text: 'Tricycles', icon: Truck, path: '/tricycles', permission: isPDG || isLogistique },
         { id: 'nouveau-tricycle', text: 'Nouveau Tricycle', icon: PlusCircle, path: '/tricycles/ajouter', permission: isPDG || isLogistique },
-        { id: 'vehicules', text: 'Véhicules', icon: Truck, path: '/vehicules', permission: isPDG || isLogistique },
+        { id: 'vehicules', text: 'Véhicules', icon: Car, path: '/vehicules', permission: isPDG || isLogistique },
         { id: 'nouveau-vehicule', text: 'Nouveau Véhicule', icon: PlusCircle, path: '/vehicules/ajouter', permission: isPDG || isLogistique },
         { id: 'separator-tricycles-1', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
         { id: 'conducteurs', text: 'Conducteurs', icon: UserCheck, path: '/conducteurs', permission: isPDG || isLogistique },
         { id: 'nouveau-conducteur', text: 'Nouveau Conducteur', icon: PlusCircle, path: '/conducteurs/ajouter', permission: isPDG || isLogistique },
-        { id: 'affectations-vehicules', text: 'Affectations', icon: UserCheck, path: '/affectations-vehicules', permission: isPDG || isLogistique },
-        { id: 'nouvelle-affectation-vehicule', text: 'Nouvelle Affectation', icon: PlusCircle, path: '/affectations-vehicules/ajouter', permission: isPDG || isLogistique },
         { id: 'separator-tricycles-2', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
-        { id: 'documents-vehicules', text: 'Documents Véhicules', icon: FileText, path: '/documents-vehicules', permission: isPDG || isLogistique },
-        { id: 'nouveau-document-vehicule', text: 'Nouveau Document', icon: PlusCircle, path: '/documents-vehicules/ajouter', permission: isPDG || isLogistique },
-        { id: 'assurances', text: 'Assurances', icon: Shield, path: '/assurances', permission: isPDG || isLogistique },
-        { id: 'nouvelle-assurance', text: 'Nouvelle Assurance', icon: PlusCircle, path: '/assurances/ajouter', permission: isPDG || isLogistique },
-        { id: 'suivi-vehicules', text: 'Suivi GPS', icon: Navigation, path: '/suivi-vehicules', permission: isPDG || isLogistique },
-        { id: 'rapports-vehicules', text: 'Rapports Véhicules', icon: FileSpreadsheet, path: '/rapports-vehicules', permission: isPDG || isLogistique }
+        { id: 'assurances', text: 'Assurances', icon: Shield, path: '/assurances', permission: isPDG || isLogistique, badge: assurancesExpirant },
+        { id: 'nouvelle-assurance', text: 'Nouvelle Assurance', icon: PlusCircle, path: '/assurances/ajouter', permission: isPDG || isLogistique }
       ]
     },
 
     // ========================================================
-    // CARBURANT  ← ✅ Renommé (plus de "& MAINTENANCE")
+    // CARBURANT
     // ========================================================
     {
       name: 'CARBURANT',
       icon: Droplet,
       items: [
-        { id: 'carburant', text: 'Carburant', icon: Droplet, path: '/carburant', permission: isPDG || isLogistique, badge: carburantAlerte },
-        { id: 'nouveau-carburant', text: 'Nouveau Plein', icon: PlusCircle, path: '/carburant/ajouter', permission: isPDG || isLogistique },
-        { id: 'suivi-carburant', text: 'Suivi Consommation', icon: TrendingUp, path: '/suivi-carburant', permission: isPDG || isLogistique },
-        { id: 'alertes-carburant', text: 'Alertes Carburant', icon: AlertTriangle, path: '/alertes-carburant', permission: isPDG || isLogistique, badge: carburantAlerte },
-        { id: 'separator-carburant-1', text: '', icon: null, path: '#', permission: isPDG || isLogistique, separator: true },
-        { id: 'pieces-detachees', text: 'Pièces Détachées', icon: Package, path: '/pieces-detachees', permission: isPDG || isLogistique },
-        { id: 'nouvelle-piece-detachee', text: 'Nouvelle Pièce', icon: PlusCircle, path: '/pieces-detachees/ajouter', permission: isPDG || isLogistique },
-        { id: 'rapports-carburant', text: 'Rapports Carburant', icon: FileSpreadsheet, path: '/rapports-carburant', permission: isPDG || isLogistique }
+        { id: 'carburant', text: 'Pleins de carburant', icon: Droplet, path: '/carburant', permission: isPDG || isLogistique, badge: carburantAlerte },
+        { id: 'nouveau-carburant', text: 'Nouveau Plein', icon: PlusCircle, path: '/carburant/ajouter', permission: isPDG || isLogistique }
       ]
     },
 
@@ -603,23 +592,20 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     },
 
     // ========================================================
-    // DOCUMENTS
+    // DOCUMENTS — ✅ REFONTE COMPLÈTE
     // ========================================================
     {
       name: 'DOCUMENTS',
       icon: Archive,
       items: [
         { id: 'documents', text: 'Tous les Documents', icon: FolderOpen, path: '/documents', permission: true },
-        { id: 'documents-recents', text: 'Documents Récents', icon: FileClock, path: '/documents-recents', permission: true },
-        { id: 'mes-documents', text: 'Mes Documents', icon: Folder, path: '/mes-documents', permission: true },
-        { id: 'separator-docs-1', text: '', icon: null, path: '#', permission: isStaff, separator: true },
-        { id: 'documents-rh-section', text: 'Documents RH', icon: Users, path: '/documents-rh-section', permission: isPDG || isRH },
-        { id: 'documents-comptables', text: 'Documents Comptables', icon: Calculator, path: '/documents-comptables', permission: isPDG || isComptable },
-        { id: 'documents-vehicules-section', text: 'Documents Véhicules', icon: Truck, path: '/documents-vehicules-section', permission: isPDG || isLogistique },
-        { id: 'documents-fournisseurs-section', text: 'Documents Fournisseurs', icon: Building2, path: '/documents-fournisseurs-section', permission: isPDG || isLogistique },
-        { id: 'documents-clients-section', text: 'Documents Clients', icon: Users, path: '/documents-clients-section', permission: isPDG || isComptable },
-        { id: 'separator-docs-2', text: '', icon: null, path: '#', permission: isPDG, separator: true },
-        { id: 'archives-documents', text: 'Archives', icon: Archive, path: '/archives-documents', permission: isPDG }
+        { id: 'nouveau-document', text: 'Nouveau Document', icon: FilePlus, path: '/documents/ajouter', permission: true },
+        { id: 'separator-docs-1', text: '', icon: null, path: '#', permission: true, separator: true },
+        { id: 'categories-documents', text: 'Catégories', icon: Tags, path: '/categories-documents', permission: true },
+        { id: 'nouvelle-categorie-document', text: 'Nouvelle Catégorie', icon: PlusCircle, path: '/categories-documents/ajouter', permission: true },
+        { id: 'separator-docs-2', text: '', icon: null, path: '#', permission: true, separator: true },
+        { id: 'documents-expirent', text: 'Expirent bientôt', icon: FileClock, path: '/documents?filtre=expire_bientot', permission: true, badge: documentsExpirant },
+        { id: 'documents-expires', text: 'Expirés', icon: AlertTriangle, path: '/documents?filtre=expire', permission: true },
       ]
     },
 
@@ -653,7 +639,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         { id: 'alertes-rh', text: 'Alertes RH', icon: Users, path: '/alertes-rh', permission: isPDG || isRH, badge: contratsExpirant + congesEnAttente },
         { id: 'alertes-finance', text: 'Alertes Finance', icon: DollarSign, path: '/alertes-finance', permission: isPDG || isComptable, badge: facturesImpayees + depensesEnAttente },
         { id: 'alertes-logistique', text: 'Alertes Logistique', icon: Package, path: '/alertes-logistique', permission: isPDG || isLogistique, badge: stockCritique + carburantAlerte },
-        { id: 'alertes-vehicules', text: 'Alertes Véhicules', icon: Truck, path: '/alertes-vehicules', permission: isPDG || isLogistique, badge: tricyclesEnMaintenance },
+        { id: 'alertes-vehicules', text: 'Alertes Véhicules', icon: Truck, path: '/alertes-vehicules', permission: isPDG || isLogistique, badge: tricyclesEnMaintenance + assurancesExpirant },
         { id: 'alertes-exploitation', text: 'Alertes Exploitation', icon: HardHat, path: '/alertes-exploitation', permission: isPDG || isSuperviseur, badge: missionsEnCours },
         { id: 'separator-alertes-1', text: '', icon: null, path: '#', permission: isPDG, separator: true },
         { id: 'config-alertes', text: 'Configurer les Alertes', icon: Settings, path: '/config-alertes', permission: isPDG },
@@ -717,7 +703,6 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     ...searchResults.map(r => ({ ...r, type: 'data' }))
   ];
 
-  // Rendu item sans badge "Nouveau"
   const renderMenuItem = (item, sectionName, isActive) => {
     if (item.separator) {
       return <div key={item.id} className="border-t border-primary/20 my-2 mx-1"></div>;
@@ -726,22 +711,28 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     const ItemIcon = item.icon;
     const badgeValue = typeof item.badge === 'number' && item.badge > 0 ? item.badge : 0;
 
+    // Comparer le path ET la query string pour les items avec ?filtre=
+    const itemUrl = new URL(item.path, window.location.origin);
+    const currentUrl = new URL(path + location.search, window.location.origin);
+    const isActiveExact = itemUrl.pathname === currentUrl.pathname &&
+      itemUrl.search === currentUrl.search;
+
     return (
       <Link
         key={item.id}
         to={item.path}
         className={`
           flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200
-          ${isActive
+          ${isActiveExact
             ? 'bg-primary text-primary-content shadow-md'
             : 'text-base-content/60 hover:bg-primary/10 hover:text-primary'
           }
         `}
       >
-        {ItemIcon && <ItemIcon className={`w-4 h-4 ${isActive ? 'text-inherit' : ''}`} />}
+        {ItemIcon && <ItemIcon className={`w-4 h-4 ${isActiveExact ? 'text-inherit' : ''}`} />}
         <span className="flex-1">{item.text}</span>
         {badgeValue > 0 && (
-          <span className={`badge badge-error badge-xs ${isActive ? 'badge-outline' : ''}`}>
+          <span className={`badge badge-error badge-xs ${isActiveExact ? 'badge-outline' : ''}`}>
             {badgeValue > 99 ? '99+' : badgeValue}
           </span>
         )}
@@ -757,11 +748,12 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       case 'CLIENTS & CONTRATS': return contratsExpirant + facturesImpayees;
       case 'FACTURATION & RECOUVREMENT': return facturesImpayees;
       case 'TRÉSORERIE': return depensesEnAttente;
-      case 'LOGISTIQUE & STOCKS': return stockCritique + tricyclesEnMaintenance;  // ✅ ajouté
-      case 'TRICYCLES & VÉHICULES': return tricyclesEnMaintenance;
-      case 'CARBURANT': return carburantAlerte;  // ✅ renommé + retiré tricyclesEnMaintenance
+      case 'LOGISTIQUE & STOCKS': return stockCritique + tricyclesEnMaintenance;
+      case 'TRICYCLES & VÉHICULES': return assurancesExpirant + tricyclesEnMaintenance;
+      case 'CARBURANT': return carburantAlerte;
       case 'EXPLOITATION / MISSIONS': return missionsEnCours;
       case 'FOURNISSEURS & ACHATS': return validationsEnAttente;
+      case 'DOCUMENTS': return documentsExpirant;
       case 'ALERTES': return notificationsCount;
       default: return 0;
     }
@@ -1124,10 +1116,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
 
                   {sidebarOpen && isOpen && (
                     <div className="ml-6 mt-2 space-y-1 border-l-2 border-primary pl-4">
-                      {section.items.map((item) => {
-                        const isActive = path === item.path;
-                        return renderMenuItem(item, section.name, isActive);
-                      })}
+                      {section.items.map((item) => renderMenuItem(item, section.name, false))}
                     </div>
                   )}
                 </div>
@@ -1226,10 +1215,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
 
                     {isOpen && (
                       <div className="ml-6 mt-2 space-y-1 border-l-2 border-primary pl-4">
-                        {section.items.map((item) => {
-                          const isActive = path === item.path;
-                          return renderMenuItem(item, section.name, isActive);
-                        })}
+                        {section.items.map((item) => renderMenuItem(item, section.name, false))}
                       </div>
                     )}
                   </div>
