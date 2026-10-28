@@ -1,374 +1,471 @@
-import React, { useState, useEffect } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+// src/components/dashboard/Dashboard.jsx
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  LayoutDashboard, Loader2, AlertCircle, RefreshCw, TrendingUp,
+  TrendingDown, DollarSign, Users, Package, Truck, HardHat,
+  Briefcase, Receipt, BarChart3, ArrowRight, WifiOff
+} from 'lucide-react';
 import AxiosInstance from '../AxiosInstance';
 import {
-  Package, ShoppingBag, Truck, DollarSign, AlertTriangle,
-  TrendingUp, TrendingDown, Users, Warehouse, Clock,
-  RefreshCw, Eye, Calendar, CreditCard, FileText
-} from 'lucide-react';
+  PieChartCard, SemiCircleCard, RadialBarCard, BarChartCard,
+  AreaChartCard, COLORS, formaterMontant,
+} from './charts/Charts';
 
-// Enregistrement des composants Chart.js
-ChartJS.register(ArcElement, Tooltip, Legend);
+const checkEnvConfig = () => {
+  const baseURL = AxiosInstance.defaults.baseURL || '';
+  const isProd = !window.location.hostname.includes('localhost') &&
+                 !window.location.hostname.includes('127.0.0.1');
+  const isLocalhostURL = baseURL.includes('localhost') || baseURL.includes('127.0.0.1');
+  return { isProd, isLocalhostURL, baseURL };
+};
+
+const formaterNombre = (n) => new Intl.NumberFormat('fr-FR').format(Number(n || 0));
 
 const Dashboard = () => {
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+  const [chargement, setChargement] = useState(true);
+  const [erreur, setErreur] = useState(null);
+  const [erreurType, setErreurType] = useState(null);
 
-  const fetchSummary = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await AxiosInstance.get('/dashboard/summary/');
-      setSummary(response.data);
-    } catch (err) {
-      console.error('Erreur chargement dashboard:', err);
-      let errorMessage = 'Impossible de charger les données du tableau de bord';
-      if (err.response) {
-        const data = err.response.data;
-        errorMessage = data.error || data.detail || data.message || `Erreur ${err.response.status}`;
-        setError(`Erreur ${err.response.status}: ${errorMessage}`);
-      } else if (err.request) {
-        setError('Aucune réponse du serveur. Vérifiez votre connexion.');
-      } else {
-        setError(`Erreur: ${err.message}`);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  const envConfig = checkEnvConfig();
 
   useEffect(() => {
-    fetchSummary();
+    charger();
   }, []);
 
-  if (loading) {
+  const charger = async () => {
+    setChargement(true);
+    setErreur(null);
+    setErreurType(null);
+
+    if (envConfig.isProd && envConfig.isLocalhostURL) {
+      setErreurType('config');
+      setErreur(`Configuration incorrecte : API "${envConfig.baseURL}" en production.`);
+      setChargement(false);
+      return;
+    }
+
+    try {
+      const res = await AxiosInstance.get('/dashboard/', { timeout: 20000 });
+      setData(res.data);
+    } catch (err) {
+      console.error('[Dashboard]', err);
+      if (err.code === 'ECONNABORTED') {
+        setErreurType('network');
+        setErreur(`Timeout : le serveur ne répond pas à "${envConfig.baseURL}".`);
+      } else if (!err.response) {
+        setErreurType('network');
+        setErreur(`Impossible de contacter "${envConfig.baseURL}".`);
+      } else if ([401, 403].includes(err.response.status)) {
+        setErreurType('auth');
+        setErreur('Session expirée. Reconnectez-vous.');
+      } else if (err.response.status === 404) {
+        setErreurType('server');
+        setErreur('Endpoint "/dashboard/" introuvable.');
+      } else {
+        setErreurType('server');
+        setErreur(`Erreur ${err.response.status}`);
+      }
+    } finally {
+      setChargement(false);
+    }
+  };
+
+  // ============================================================
+  // PRÉPARATION DES DONNÉES GRAPHES
+  // ============================================================
+  const financier = data?.financier || {};
+  const clients = data?.clients || {};
+  const stocks = data?.stocks || {};
+  const vehicules = data?.vehicules || {};
+  const achats = data?.achats || {};
+  const exploitation = data?.exploitation || {};
+  const rh = data?.rh || {};
+
+  // Données camembert financier
+  const pieFinancier = useMemo(() => {
+    const f = financier.factures || {};
+    return [
+      { name: 'Payées', value: Number(f.payees || 0) },
+      { name: 'Impayées', value: Number(f.impayees || 0) },
+    ].filter(d => d.value > 0);
+  }, [financier]);
+
+  // Données semi-cercle tricycles
+  const semiTricycles = useMemo(() => {
+    const t = vehicules.tricycles || {};
+    return [
+      { name: 'Disponibles', value: Number(t.disponibles || 0) },
+      { name: 'En mission', value: Number(t.en_mission || 0) },
+      { name: 'En panne', value: Number(t.en_panne || 0) },
+    ].filter(d => d.value > 0);
+  }, [vehicules]);
+
+  // Données radial bar : flux financier
+  const radialFinancier = useMemo(() => {
+    const e = financier.encaissements || {};
+    const d = financier.decaissements || {};
+    const c = financier.creances || {};
+    return [
+      { name: 'Encaissements', value: Number(e.mois || 0), fill: COLORS.success },
+      { name: 'Décaissements', value: Number(d.mois || 0), fill: COLORS.warning },
+      { name: 'Créances', value: Number(c.total || 0), fill: COLORS.error },
+    ].filter(d => d.value > 0);
+  }, [financier]);
+
+  // Données bar chart : stocks critiques/alertes/actifs
+  const barStocks = useMemo(() => {
+    const a = stocks.articles || {};
+    return [
+      { name: 'Critiques', value: Number(a.critiques || 0), fill: COLORS.error },
+      { name: 'Alertes', value: Number(a.alertes || 0), fill: COLORS.warning },
+      { name: 'OK', value: Math.max(Number(a.actifs || 0) - Number(a.critiques || 0) - Number(a.alertes || 0), 0), fill: COLORS.success },
+    ];
+  }, [stocks]);
+
+  // Données évolution CA (mini preview — 6 derniers mois)
+  const evolutionPreview = useMemo(() => {
+    // On n'a pas l'évolution dans /dashboard/, on la simulera avec les factures
+    const f = financier.factures || {};
+    return [
+      { name: 'Total', value: Number(f.montant_total || 0) },
+      { name: 'Ce mois', value: Number(f.montant_mois || 0) },
+      { name: 'Cette année', value: Number(f.montant_annee || 0) },
+    ];
+  }, [financier]);
+
+  if (chargement) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center py-20 w-full">
         <div className="text-center">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
-          <p className="mt-4 text-base-content/60">Chargement du tableau de bord...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-3" />
+          <p className="text-sm text-base-content/60">Chargement du tableau de bord...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (erreur) {
+    const IconErreur = erreurType === 'network' ? WifiOff : AlertCircle;
+    const couleurIcone = erreurType === 'config' ? 'warning' : 'error';
     return (
-      <div className="p-6">
-        <div className="alert alert-error shadow-lg">
-          <AlertTriangle className="w-6 h-6" />
-          <span>{error}</span>
-          <button className="btn btn-sm btn-ghost" onClick={fetchSummary}>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Réessayer
-          </button>
+      <div className="max-w-2xl mx-auto py-12 px-4">
+        <div className={`card bg-base-100 shadow-sm border-2 border-${couleurIcone}/30`}>
+          <div className="card-body">
+            <div className="text-center mb-4">
+              <div className={`w-20 h-20 rounded-full bg-${couleurIcone}/10 flex items-center justify-center mx-auto mb-3`}>
+                <IconErreur className={`w-10 h-10 text-${couleurIcone}`} />
+              </div>
+              <h2 className="text-xl font-bold mb-2">Tableau de bord indisponible</h2>
+              <p className="text-sm text-base-content/70">{erreur}</p>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <button onClick={charger} className="btn btn-primary gap-2">
+                <RefreshCw className="w-4 h-4" /> Réessayer
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
-
-  if (!summary) {
-    return (
-      <div className="p-6 text-center">
-        <p className="text-base-content/60">Aucune donnée disponible</p>
-      </div>
-    );
-  }
-
-  const { products, sales, purchases, cash, alerts, recent_activities } = summary;
-
-  const formatCurrency = (num) => {
-    if (num === undefined || num === null) return '0 FCFA';
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' })
-      .format(num)
-      .replace('XOF', 'FCFA');
-  };
-
-  const formatNumber = (num) => {
-    if (num === undefined || num === null) return '0';
-    return new Intl.NumberFormat('fr-FR').format(num);
-  };
-
-  const formatDate = (date) => {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Données pour le graphique des produits
-  const productPieData = {
-    labels: ['Normal', 'Stock faible', 'Rupture'],
-    datasets: [
-      {
-        label: 'Produits',
-        data: [
-          products.total - products.low_stock - products.out_of_stock,
-          products.low_stock,
-          products.out_of_stock
-        ],
-        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-        borderColor: ['#ffffff', '#ffffff', '#ffffff'],
-        borderWidth: 2,
-      },
-    ],
-  };
-
-  const productPieOptions = {
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: '#6b7280',
-          font: { size: 12 },
-        },
-      },
-    },
-    maintainAspectRatio: false,
-  };
-
-  // Données pour le graphique des alertes
-  const alertPieData = {
-    labels: ['Stock faible', 'Lots expirant', 'Factures en retard'],
-    datasets: [
-      {
-        label: 'Alertes',
-        data: [alerts.low_stock, alerts.expiring_lots, alerts.overdue_invoices],
-        backgroundColor: ['#f59e0b', '#ef4444', '#8b5cf6'],
-        borderColor: ['#ffffff', '#ffffff', '#ffffff'],
-        borderWidth: 2,
-      },
-    ],
-  };
-
-  const alertPieOptions = {
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          color: '#6b7280',
-          font: { size: 12 },
-        },
-      },
-    },
-    maintainAspectRatio: false,
-  };
-
-  const getActivityIcon = (type) => {
-    switch (type) {
-      case 'vente': return <ShoppingBag className="w-4 h-4 text-success" />;
-      case 'achat': return <Truck className="w-4 h-4 text-info" />;
-      case 'mouvement': return <DollarSign className="w-4 h-4 text-warning" />;
-      default: return <Clock className="w-4 h-4 text-base-content/40" />;
-    }
-  };
-
-  const getActivityColor = (type) => {
-    switch (type) {
-      case 'vente': return 'border-l-success';
-      case 'achat': return 'border-l-info';
-      case 'mouvement': return 'border-l-warning';
-      default: return 'border-l-base-300';
-    }
-  };
 
   return (
-    <div className="p-4 md:p-6 bg-base-200 min-h-screen">
-      {/* En-tête */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+    <div className="w-full p-6">
+      {/* EN-TÊTE */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Tableau de bord
+          <div className="flex items-center gap-2 text-xs text-base-content/50 uppercase mb-1">
+            <LayoutDashboard className="w-3 h-3" /> Tableau de bord
+          </div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <LayoutDashboard className="w-8 h-8 text-primary" />
+            Vue d'ensemble
           </h1>
-          <p className="text-base-content/60 text-sm mt-1">
-            Vue d'ensemble de l'activité du magasin
+          <p className="text-base-content/60 mt-1">
+            Données du {data?.date ? new Date(data.date).toLocaleDateString('fr-FR', {
+              day: 'numeric', month: 'long', year: 'numeric'
+            }) : '—'}
           </p>
         </div>
-        <button onClick={fetchSummary} className="btn btn-primary gap-2">
-          <RefreshCw className="w-4 h-4" />
-          Actualiser
-        </button>
-      </div>
-
-      {/* Cartes statistiques */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-base-content/60 text-sm font-medium">Produits</p>
-                <p className="text-2xl font-bold">{formatNumber(products.total)}</p>
-                <div className="flex gap-3 text-xs mt-1">
-                  <span className="text-error">Rupture: {formatNumber(products.out_of_stock)}</span>
-                  <span className="text-warning">Stock faible: {formatNumber(products.low_stock)}</span>
-                </div>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Package className="w-6 h-6 text-primary" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-base-content/60 text-sm font-medium">Ventes (mois)</p>
-                <p className="text-2xl font-bold">{formatNumber(sales.total_count)}</p>
-                <p className="text-sm text-success font-semibold">{formatCurrency(sales.total_amount)}</p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center">
-                <ShoppingBag className="w-6 h-6 text-success" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-base-content/60 text-sm font-medium">Achats (mois)</p>
-                <p className="text-2xl font-bold">{formatNumber(purchases.total_count)}</p>
-                <p className="text-sm text-info font-semibold">{formatCurrency(purchases.total_amount)}</p>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-info/10 flex items-center justify-center">
-                <Truck className="w-6 h-6 text-info" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
-          <div className="card-body p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-base-content/60 text-sm font-medium">Trésorerie</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(cash.total_available)}</p>
-                <div className="flex gap-3 text-xs mt-1">
-                  <span>Espèces: {formatCurrency(cash.total_cash)}</span>
-                  <span>Banque: {formatCurrency(cash.total_bank)}</span>
-                </div>
-              </div>
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-primary" />
-              </div>
-            </div>
-          </div>
+        <div className="flex gap-2">
+          <button onClick={charger} className="btn btn-ghost btn-sm gap-2">
+            <RefreshCw className="w-4 h-4" /> Rafraîchir
+          </button>
+          <Link to="/statistiques" className="btn btn-primary btn-sm gap-2">
+            <BarChart3 className="w-4 h-4" /> Statistiques
+          </Link>
         </div>
       </div>
 
-      {/* Graphiques circulaires */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="card bg-base-100 shadow-md">
-          <div className="card-body p-5">
-            <h3 className="text-lg font-semibold mb-2">État des produits</h3>
-            <div className="h-64">
-              <Pie data={productPieData} options={productPieOptions} />
-            </div>
-          </div>
-        </div>
-        <div className="card bg-base-100 shadow-md">
-          <div className="card-body p-5">
-            <h3 className="text-lg font-semibold mb-2">Répartition des alertes</h3>
-            <div className="h-64">
-              <Pie data={alertPieData} options={alertPieOptions} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Alertes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="card bg-base-100 shadow-md">
+      {/* ============================================================ */}
+      {/* KPI CARDS */}
+      {/* ============================================================ */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Link to="/factures" className="card bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 border border-primary/20 shadow-sm transition-all">
           <div className="card-body p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 text-warning" />
-              <div>
-                <p className="text-sm font-medium">Alertes stock</p>
-                <p className="text-xl font-bold text-warning">{formatNumber(alerts.low_stock)}</p>
-              </div>
+            <div className="flex items-center justify-between mb-2">
+              <Receipt className="w-6 h-6 text-primary" />
+              <ArrowRight className="w-4 h-4 text-primary/50" />
             </div>
+            <p className="text-xs text-primary/70 uppercase font-medium">Factures</p>
+            <p className="text-3xl font-bold text-primary">{formaterNombre(financier.factures?.total)}</p>
+            <p className="text-xs text-primary/60 mt-1 truncate">
+              {formaterMontant(financier.factures?.montant_total)}
+            </p>
           </div>
-        </div>
-        <div className="card bg-base-100 shadow-md">
+        </Link>
+
+        <Link to="/creances" className="card bg-gradient-to-br from-error/10 to-error/5 hover:from-error/20 hover:to-error/10 border border-error/20 shadow-sm transition-all">
           <div className="card-body p-4">
-            <div className="flex items-center gap-3">
-              <Package className="w-5 h-5 text-error" />
-              <div>
-                <p className="text-sm font-medium">Lots expirant</p>
-                <p className="text-xl font-bold text-error">{formatNumber(alerts.expiring_lots)}</p>
-              </div>
+            <div className="flex items-center justify-between mb-2">
+              <TrendingDown className="w-6 h-6 text-error" />
+              <ArrowRight className="w-4 h-4 text-error/50" />
             </div>
+            <p className="text-xs text-error/70 uppercase font-medium">Créances</p>
+            <p className="text-3xl font-bold text-error">{formaterNombre(financier.creances?.nombre)}</p>
+            <p className="text-xs text-error/60 mt-1 truncate">
+              {formaterMontant(financier.creances?.total)}
+            </p>
           </div>
-        </div>
-        <div className="card bg-base-100 shadow-md">
+        </Link>
+
+        <Link to="/articles" className="card bg-gradient-to-br from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 border border-success/20 shadow-sm transition-all">
           <div className="card-body p-4">
-            <div className="flex items-center gap-3">
-              <FileText className="w-5 h-5 text-error" />
-              <div>
-                <p className="text-sm font-medium">Factures en retard</p>
-                <p className="text-xl font-bold text-error">{formatNumber(alerts.overdue_invoices)}</p>
-              </div>
+            <div className="flex items-center justify-between mb-2">
+              <Package className="w-6 h-6 text-success" />
+              <ArrowRight className="w-4 h-4 text-success/50" />
             </div>
+            <p className="text-xs text-success/70 uppercase font-medium">Articles</p>
+            <p className="text-3xl font-bold text-success">{formaterNombre(stocks.articles?.total)}</p>
+            <p className="text-xs text-success/60 mt-1">
+              {formaterNombre(stocks.articles?.critiques)} critiques
+            </p>
           </div>
-        </div>
+        </Link>
+
+        <Link to="/tricycles" className="card bg-gradient-to-br from-warning/10 to-warning/5 hover:from-warning/20 hover:to-warning/10 border border-warning/20 shadow-sm transition-all">
+          <div className="card-body p-4">
+            <div className="flex items-center justify-between mb-2">
+              <Truck className="w-6 h-6 text-warning" />
+              <ArrowRight className="w-4 h-4 text-warning/50" />
+            </div>
+            <p className="text-xs text-warning/70 uppercase font-medium">Tricycles</p>
+            <p className="text-3xl font-bold text-warning">{formaterNombre(vehicules.tricycles?.total)}</p>
+            <p className="text-xs text-warning/60 mt-1">
+              {formaterNombre(vehicules.tricycles?.disponibles)} dispo.
+            </p>
+          </div>
+        </Link>
       </div>
 
-      {/* Activités récentes */}
-      <div className="card bg-base-100 shadow-md">
-        <div className="card-body p-5">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
-            Activités récentes
-          </h2>
-          <div className="divider my-2"></div>
-          <div className="space-y-3">
-            {recent_activities && recent_activities.length > 0 ? (
-              recent_activities.map((activity, idx) => (
-                <div
-                  key={idx}
-                  className={`flex items-start gap-3 p-3 rounded-lg border-l-4 ${getActivityColor(activity.type)} bg-base-200/50`}
-                >
-                  <div className="mt-1">
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-medium capitalize">
-                        {activity.type} - {activity.reference}
-                      </span>
-                      <span className="text-xs text-base-content/40">
-                        {formatDate(activity.date)}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-3 text-sm text-base-content/60">
-                      {activity.amount && (
-                        <span className="font-semibold text-success">
-                          {formatCurrency(activity.amount)}
-                        </span>
-                      )}
-                      {activity.user && (
-                        <span>Par: {activity.user}</span>
-                      )}
-                      {activity.info && (
-                        <span>{activity.info}</span>
-                      )}
-                    </div>
-                  </div>
-                  <Eye className="w-4 h-4 text-base-content/30 cursor-pointer hover:text-primary" />
-                </div>
-              ))
-            ) : (
-              <p className="text-center text-base-content/40 py-4">Aucune activité récente</p>
-            )}
+      {/* ============================================================ */}
+      {/* GRAPHES FINANCIER */}
+      {/* ============================================================ */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Camembert : factures payées vs impayées */}
+        {pieFinancier.length > 0 && (
+          <PieChartCard
+            title="État des factures"
+            subtitle={`${formaterNombre(financier.factures?.total)} factures au total`}
+            data={pieFinancier}
+            formatter={(v) => formaterNombre(v)}
+            height={280}
+            innerRadius={40}
+            outerRadius={90}
+          />
+        )}
+
+        {/* Radial : flux financier mois */}
+        {radialFinancier.length > 0 && (
+          <RadialBarCard
+            title="Flux financiers (mois)"
+            subtitle="Encaissements vs décaissements vs créances"
+            data={radialFinancier}
+            height={280}
+          />
+        )}
+
+        {/* Bar : stocks critiques */}
+        {barStocks.length > 0 && (
+          <BarChartCard
+            title="Alertes stocks"
+            subtitle="Répartition des articles"
+            data={barStocks}
+            formatter={(v) => formaterNombre(v)}
+            height={280}
+          />
+        )}
+      </div>
+
+      {/* ============================================================ */}
+      {/* SEMI-CERCLE TRICYCLES + EVOLUTION CA */}
+      {/* ============================================================ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {semiTricycles.length > 0 && (
+          <SemiCircleCard
+            title="État du parc tricycles"
+            subtitle={`${formaterNombre(vehicules.tricycles?.total)} tricycles`}
+            data={semiTricycles}
+            formatter={(v) => formaterNombre(v)}
+            height={280}
+          />
+        )}
+
+        <AreaChartCard
+          title="Chiffre d'affaires"
+          subtitle="Total vs mensuel vs annuel"
+          data={evolutionPreview}
+          dataKey="value"
+          nameKey="name"
+          formatter={(v) => formaterMontant(v)}
+          color={COLORS.success}
+          height={280}
+        />
+      </div>
+
+      {/* ============================================================ */}
+      {/* DÉTAILS PAR MODULE */}
+      {/* ============================================================ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Clients */}
+        <div className="card bg-base-100 shadow-sm border border-base-300">
+          <div className="px-4 py-3 border-b bg-base-200/30 flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" />
+            <h3 className="font-bold text-sm">Clients</h3>
+          </div>
+          <div className="card-body p-4">
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Total</p>
+                <p className="text-2xl font-bold">{formaterNombre(clients.total)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Actifs</p>
+                <p className="text-2xl font-bold text-success">{formaterNombre(clients.actifs)}</p>
+              </div>
+            </div>
+            <Link to="/clients" className="btn btn-ghost btn-sm gap-1 w-full">
+              Voir <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* RH */}
+        <div className="card bg-base-100 shadow-sm border border-base-300">
+          <div className="px-4 py-3 border-b bg-base-200/30 flex items-center gap-2">
+            <Users className="w-4 h-4 text-info" />
+            <h3 className="font-bold text-sm">Ressources Humaines</h3>
+          </div>
+          <div className="card-body p-4">
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Employés</p>
+                <p className="text-2xl font-bold">{formaterNombre(rh.employes?.total)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Actifs</p>
+                <p className="text-2xl font-bold text-success">{formaterNombre(rh.employes?.actifs)}</p>
+              </div>
+            </div>
+            <Link to="/employes" className="btn btn-ghost btn-sm gap-1 w-full">
+              Voir <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Achats */}
+        <div className="card bg-base-100 shadow-sm border border-base-300">
+          <div className="px-4 py-3 border-b bg-base-200/30 flex items-center gap-2">
+            <Briefcase className="w-4 h-4 text-warning" />
+            <h3 className="font-bold text-sm">Achats</h3>
+          </div>
+          <div className="card-body p-4">
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Fournisseurs</p>
+                <p className="text-2xl font-bold">{formaterNombre(achats.fournisseurs?.total)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">BC en cours</p>
+                <p className="text-2xl font-bold text-warning">{formaterNombre(achats.bons_commande?.en_cours)}</p>
+              </div>
+            </div>
+            <Link to="/fournisseurs" className="btn btn-ghost btn-sm gap-1 w-full">
+              Voir <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Exploitation */}
+        <div className="card bg-base-100 shadow-sm border border-base-300">
+          <div className="px-4 py-3 border-b bg-base-200/30 flex items-center gap-2">
+            <HardHat className="w-4 h-4 text-success" />
+            <h3 className="font-bold text-sm">Exploitation</h3>
+          </div>
+          <div className="card-body p-4">
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Missions</p>
+                <p className="text-2xl font-bold">{formaterNombre(exploitation.missions?.total)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">En cours</p>
+                <p className="text-2xl font-bold text-info">{formaterNombre(exploitation.missions?.en_cours)}</p>
+              </div>
+            </div>
+            <Link to="/missions" className="btn btn-ghost btn-sm gap-1 w-full">
+              Voir <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Carburant */}
+        <div className="card bg-base-100 shadow-sm border border-base-300">
+          <div className="px-4 py-3 border-b bg-base-200/30 flex items-center gap-2">
+            <Truck className="w-4 h-4 text-error" />
+            <h3 className="font-bold text-sm">Carburant (mois)</h3>
+          </div>
+          <div className="card-body p-4">
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Litres</p>
+                <p className="text-2xl font-bold">{formaterNombre(vehicules.carburant?.litres_mois)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Montant</p>
+                <p className="text-sm font-bold font-mono text-error">
+                  {formaterMontant(vehicules.carburant?.montant_mois)}
+                </p>
+              </div>
+            </div>
+            <Link to="/carburant" className="btn btn-ghost btn-sm gap-1 w-full">
+              Voir <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Incidents */}
+        <div className="card bg-base-100 shadow-sm border border-base-300">
+          <div className="px-4 py-3 border-b bg-base-200/30 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-error" />
+            <h3 className="font-bold text-sm">Incidents</h3>
+          </div>
+          <div className="card-body p-4">
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Ouverts</p>
+                <p className="text-2xl font-bold text-error">{formaterNombre(exploitation.incidents?.ouverts)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-base-content/50 uppercase">Critiques</p>
+                <p className="text-2xl font-bold text-error">{formaterNombre(exploitation.incidents?.critiques)}</p>
+              </div>
+            </div>
+            <Link to="/incidents" className="btn btn-ghost btn-sm gap-1 w-full">
+              Voir <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
         </div>
       </div>

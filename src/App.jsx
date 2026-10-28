@@ -299,6 +299,12 @@ import ConfigAlertes from './components/alertes/ConfigAlertes';
 import CanauxNotification from './components/alertes/CanauxNotification';
 
 
+import Dashboard from './components/dashboard/Dashboard';
+import Statistiques from './components/dashboard/Statistiques';
+import Analyses from './components/dashboard/Analyses';
+
+
+
 
 
 
@@ -332,6 +338,9 @@ function App() {
 
 
 
+<Route path="/dashboard" element={<Dashboard />} />
+<Route path="/statistiques" element={<Statistiques />} />
+<Route path="/analyses" element={<Analyses />} />
 
 <Route path="/config-alertes" element={<ConfigAlertes />} />
 <Route path="/canaux-notification" element={<CanauxNotification />} />
