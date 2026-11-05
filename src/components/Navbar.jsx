@@ -95,6 +95,19 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
   const [documentsExpirant, setDocumentsExpirant] = useState(0);
 
   // ============================================================
+  // ✅ FERMETURE AUTOMATIQUE DES MENUS À CHAQUE CHANGEMENT DE PAGE
+  // (corrige le bug responsive : le menu mobile restait ouvert)
+  // ============================================================
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsUserMenuOpen(false);
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    // Remonter en haut de page à chaque navigation
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }, [path, location.search]);
+
+  // ============================================================
   // UTILISATEUR
   // ============================================================
   const getUserData = () => {
@@ -202,7 +215,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
         safeGet('/depenses/en-attente/', setDepensesEnAttente);
         safeGet('/carburant/alertes/', setCarburantAlerte);
         safeGet('/assurances/qui_expirent/', setAssurancesExpirant);
-        safeGet('/documents/expirent/', setDocumentsExpirant);  // ✅ AJOUTÉ
+        safeGet('/documents/expirent/', setDocumentsExpirant);
         safeGet('/notifications/non-lues/', setNotificationsCount);
       }
     };
@@ -703,6 +716,10 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     ...searchResults.map(r => ({ ...r, type: 'data' }))
   ];
 
+  // ============================================================
+  // ✅ RENDU D'UN ITEM DE MENU
+  // Le onClick ferme le menu mobile pour laisser voir la nouvelle page
+  // ============================================================
   const renderMenuItem = (item, sectionName, isActive) => {
     if (item.separator) {
       return <div key={item.id} className="border-t border-primary/20 my-2 mx-1"></div>;
@@ -717,10 +734,19 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
     const isActiveExact = itemUrl.pathname === currentUrl.pathname &&
       itemUrl.search === currentUrl.search;
 
+    const handleItemClick = () => {
+      // ✅ FIX RESPONSIVE : on ferme tout de suite l'overlay mobile
+      // pour que l'utilisateur voie la page demandée
+      setIsMobileMenuOpen(false);
+      setIsUserMenuOpen(false);
+      setIsSearchOpen(false);
+    };
+
     return (
       <Link
         key={item.id}
         to={item.path}
+        onClick={handleItemClick}
         className={`
           flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200
           ${isActiveExact
@@ -929,6 +955,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
 
               <Link
                 to="/alertes"
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="relative p-2 rounded-lg text-primary-content hover:bg-primary-content/10 transition-colors"
                 title="Alertes"
               >
@@ -1161,7 +1188,7 @@ const Navbar = ({ content, mode, toggleColorMode }) => {
       {isMobileMenuOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 z-50 lg:hidden" onClick={() => setIsMobileMenuOpen(false)}></div>
-          <div className="fixed top-0 left-0 bottom-0 w-80 bg-base-100 z-50 shadow-2xl lg:hidden overflow-y-auto">
+          <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-base-100 z-50 shadow-2xl lg:hidden overflow-y-auto">
             <div className="relative overflow-hidden bg-gradient-to-br from-primary to-primary/80 p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
